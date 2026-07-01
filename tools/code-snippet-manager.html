@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -417,9 +417,9 @@
 
       <main class="main-content" id="mainContent">
         <!-- Viewer will be injected here -->
-        <div id="emptyState" style="text-align: center; margin: auto; color: var(--text-secondary); display: flex; flex-direction: column; gap: 1rem;">
-          <div style="font-size: 4rem; line-height: 1; opacity: 0.5;">&lt; / &gt;</div>
-          <p style="font-size: 1.125rem;">Select a snippet to view it, or add a new one.</p>
+        <div id="emptyState" style="text-align: center; margin: auto; color: var(--text-secondary); display: flex; flex-direction: column; gap: 1rem">
+          <div style="font-size: 4rem; line-height: 1; opacity: 0.5">&lt; / &gt;</div>
+          <p style="font-size: 1.125rem">Select a snippet to view it, or add a new one.</p>
         </div>
       </main>
     </div>
@@ -603,15 +603,18 @@
             const btn = e.currentTarget;
             if (btn.disabled) return;
 
-            navigator.clipboard.writeText(snippet.code).then(() => {
-              const originalText = btn.textContent;
-              btn.textContent = `[✓] Copied to clipboard!`;
-              btn.disabled = true;
-              setTimeout(() => {
-                btn.textContent = originalText;
-                btn.disabled = false;
-              }, 2000);
-            }).catch(err => console.error("Failed to copy snippet:", err));
+            navigator.clipboard
+              .writeText(snippet.code)
+              .then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = `[✓] Copied to clipboard!`;
+                btn.disabled = true;
+                setTimeout(() => {
+                  btn.textContent = originalText;
+                  btn.disabled = false;
+                }, 2000);
+              })
+              .catch((err) => console.error("Failed to copy snippet:", err));
           });
         };
 
@@ -643,8 +646,11 @@
           const snippetData = {
             title: snippetTitleInput.value,
             language: snippetLangInput.value.toLowerCase(),
-            tags: snippetTagsInput.value.split(",").map((t) => t.trim()).filter(Boolean),
-            code: snippetCodeInput.value,
+            tags: snippetTagsInput.value
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean),
+            code: snippetCodeInput.value
           };
 
           if (id) {
