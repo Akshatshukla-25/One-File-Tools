@@ -517,6 +517,32 @@
       "status": "live"
     },
     {
+      "id": "color-picker",
+      "name": "Color Picker",
+      "shortDescription": "Pick a color and view it in HEX, RGB, HSL, and HSV, with generated shades and recent colors.",
+      "longDescription": "## Color Picker\n\nPick a color visually and instantly see its value across HEX, RGB, HSL, and HSV. Edit any format to synchronize the rest, generate a shade strip, and build a running palette of recently used colors.\n\n### Features\n\n- Interactive color picker using the native browser color input\n- Live values in HEX, RGB, HSL, and HSV\n- Edit any supported format to synchronize the others\n- Live contrast preview against white and black\n- One-click copy for each format\n- Recently selected colors palette\n- Generated lighter/darker shade strip\n- Clear/reset to the default color\n- Fully responsive, keyboard accessible, and works entirely offline",
+      "category": "color",
+      "tags": [
+        "color",
+        "css",
+        "developer-tools",
+        "hex",
+        "hsl",
+        "hsv",
+        "picker",
+        "rgb",
+        "ui"
+      ],
+      "techStack": [
+        "CSS3",
+        "Google Fonts",
+        "HTML5",
+        "Vanilla JS"
+      ],
+      "difficulty": "Easy",
+      "status": "live"
+    },
+    {
       "id": "command-step-loader",
       "name": "Command Step Loader",
       "shortDescription": "Load multiple commands and copy them one at a time with a terminal-style interface.",
