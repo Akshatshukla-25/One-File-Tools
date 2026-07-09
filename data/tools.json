@@ -1242,10 +1242,10 @@
     },
     {
       "id": "http-header-inspector-v2",
-      "name": "HTTP Header Inspector",
+      "name": "HTTP Header Inspector (v2)",
       "shortDescription": "Inspect HTTP response headers, understand their purpose, and analyze security, caching, CORS, and performance information.",
       "longDescription": "## HTTP Header Inspector\n\nInspect and analyze HTTP response headers from any URL or pasted raw headers. Learn what each header does through categorized explanations, identify security-related headers, review caching directives, and inspect CORS behavior.\n\n### Features\n\n- Fetch headers directly from a URL\n- Analyze pasted raw HTTP headers\n- Categorized header explanations (Security, CORS, Caching, Cookies, Content, Networking)\n- Search and filter headers instantly\n- Copy individual headers or all headers\n- Responsive design with keyboard accessibility\n- Works completely offline for pasted headers",
-      "category": "networking",
+      "category": "browser-network",
       "tags": [
         "api",
         "caching",
@@ -1725,7 +1725,7 @@
       "name": "Procedural Pixel Art Generator",
       "shortDescription": "Generate symmetrical retro 8-bit sprites using cellular automata and random noise.",
       "longDescription": "## Procedural Pixel Art Sprite Generator & Animator\n\nCreate a web-based pixel art creator and procedural asset generator using HTML, CSS, and JavaScript. The application leverages cellular automata and symmetric random noise to automatically generate retro sprites (e.g. spaceships, monsters, items) and animate them using pixel grid timelines.\n\n### Features\n\n- Educates developers on procedural logic, cellular automata (Conway's rules), and random seeding.\n- Provides an interactive UI for creating, generating, and exporting retro pixel art.\n- Demonstrates timeline frames and sprite sheet generation techniques.",
-      "category": "Web & SEO",
+      "category": "web-seo",
       "tags": [
         "canvas",
         "enhancement",
