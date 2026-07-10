@@ -1705,6 +1705,34 @@
       "status": "live"
     },
     {
+      "id": "ocr-text-extractor",
+      "name": "OCR Text Extractor",
+      "shortDescription": "Extract text from images entirely offline using client-side OCR.",
+      "longDescription": "## OCR Text Extractor\n\nExtract text from images entirely in your browser using client-side OCR (Tesseract.js).\n\n### Features\n\n- Drag-and-drop image upload (PNG, JPG, WebP)\n- Offline OCR (downloads language data on first run, then reuses cached files)\n- Progress bar for initialization and recognition\n- Canvas preprocessing (upscaling + contrast) to improve accuracy\n- Copy extracted text to clipboard",
+      "category": "text",
+      "tags": [
+        "extractor",
+        "image",
+        "ocr",
+        "offline",
+        "text",
+        "utility"
+      ],
+      "techStack": [
+        "Canvas API",
+        "Clipboard API",
+        "CSS3",
+        "FileReader API",
+        "HTML5",
+        "Tesseract.js",
+        "Vanilla JS",
+        "WASM",
+        "Web Workers"
+      ],
+      "difficulty": "Hard",
+      "status": "live"
+    }
+    {
       "id": "open-graph-checker",
       "name": "Open Graph Checker",
       "shortDescription": "Validate Open Graph tags from any public URL with social previews, health score, and JSON export.",
