@@ -287,6 +287,29 @@
       "status": "live"
     },
     {
+      "id": "regex-css-golf",
+      "name": "Regex CSS Golf",
+      "shortDescription": "Master CSS selectors through interactive golf-style challenges by writing the shortest valid selector to match target elements.",
+      "longDescription": "## Regex CSS Golf\n\nSharpen your CSS selector skills with golf-style puzzles. Write the shortest valid CSS selector that matches only the highlighted target elements while avoiding all others. Progress through increasingly challenging levels covering combinators, pseudo-classes, attribute selectors, and structural selectors.\n\n### Features\n\n- Progressive CSS selector challenges\n- Real-time validation and feedback\n- Golf scoring based on selector length\n- Learn combinators, attribute selectors, and pseudo-classes\n- Local progress saving using localStorage\n- Fully offline, single-file quest",
+      "category": "css",
+      "tags": [
+        "css",
+        "css-selectors",
+        "golf",
+        "interactive",
+        "quest",
+        "selectors"
+      ],
+      "techStack": [
+        "CSS3",
+        "HTML5",
+        "LocalStorage API",
+        "Vanilla JS"
+      ],
+      "difficulty": "Medium",
+      "status": "live"
+    },
+    {
       "id": "regex-golf",
       "name": "Regex Golf",
       "shortDescription": "Write the shortest regex to separate two sets of strings. 10 holes, par scoring, localStorage progress.",
