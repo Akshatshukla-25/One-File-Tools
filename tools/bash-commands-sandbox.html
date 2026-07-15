@@ -456,7 +456,7 @@
               isRecursive = args[0].includes("r");
               targetName = args[1];
             }
-            
+
             const targetPath = resolvePath(targetName);
             const parts = targetPath.split("/").filter(Boolean);
             const name = parts.pop();
