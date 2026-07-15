@@ -273,11 +273,11 @@ features.addEventListener("input",generateREADME);
 license.addEventListener("change",generateREADME);
 
 function copyREADME(){
-
-navigator.clipboard.writeText(output.value);
-
+navigator.clipboard.writeText(output.value).then(function(){
 alert("README copied successfully!");
-
+}).catch(function(){
+alert("Failed to copy. Please select the text and copy manually.");
+});
 }
 
 function downloadREADME(){

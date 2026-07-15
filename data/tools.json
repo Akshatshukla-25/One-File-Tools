@@ -2334,10 +2334,22 @@
     {
       "id": "readme-template-generator",
       "name": "README Template Generator",
-      "description": "Generate a professional GitHub README.md with customizable sections. Copy or download instantly.",
-      "category": "Text & Content",
+      "shortDescription": "Generate a professional GitHub README.md with customizable sections. Copy or download instantly.",
+      "longDescription": "## README Template Generator\n\nGenerate a professional GitHub README.md with customizable sections including project title, description, badges, installation, usage, contributing, and license.\n\n### Features\n\n- Single HTML file\n- Customizable sections\n- Copy or download instantly\n- Dark mode support\n- Responsive design",
+      "category": "text",
+      "tags": [
+        "generator",
+        "markdown",
+        "readme",
+        "template"
+      ],
+      "techStack": [
+        "CSS3",
+        "HTML5",
+        "Vanilla JS"
+      ],
       "difficulty": "Medium",
-       "status": "live"
+      "status": "live"
     },
     {
       "id": "regex-playground",
