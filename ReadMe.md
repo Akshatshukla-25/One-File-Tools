@@ -351,6 +351,50 @@ Quests are playable, gamified lessons — single HTML files that teach through i
 | API Design Review — spot the REST anti-patterns in mock API designs            | Easy       |
 | Accessibility Audit Quest — find and fix a11y issues in broken HTML snippets   | Medium     |
 
+### Design System — Premium UI Showcases
+
+Single-file UI showcases built with CSS frameworks and JS libraries via CDN. Show off your frontend creativity — dashboards, landing pages, components, and more. See the [Design System Contributing Guide](design-system/Contributing.md) for details.
+
+#### Dashboards
+
+| Idea                                                                           | Difficulty |
+| ------------------------------------------------------------------------------ | ---------- |
+| Analytics Dashboard — charts, stats cards, and a responsive sidebar            | Medium     |
+| DevOps Monitor — real-time-style service health, uptime graphs, and alerts     | Hard       |
+| Project Management Board — Kanban columns with drag-and-drop cards             | Medium     |
+
+#### Landing Pages
+
+| Idea                                                                           | Difficulty |
+| ------------------------------------------------------------------------------ | ---------- |
+| SaaS Pricing Page — tiered pricing cards with toggle and feature comparison    | Easy       |
+| Developer Tool Landing — hero, features grid, testimonials, and CTA            | Medium     |
+| Event Conference Page — schedule, speakers, venue map, and registration CTA    | Medium     |
+
+#### Components
+
+| Idea                                                                           | Difficulty |
+| ------------------------------------------------------------------------------ | ---------- |
+| Form Components Library — inputs, selects, toggles, date pickers, validation  | Medium     |
+| Notification System — toast, banner, modal, and inline alert patterns          | Easy       |
+| Data Table — sortable, filterable, paginated table with bulk actions           | Hard       |
+
+#### E-Commerce
+
+| Idea                                                                           | Difficulty |
+| ------------------------------------------------------------------------------ | ---------- |
+| Product Page — image gallery, size picker, reviews, and add-to-cart            | Medium     |
+| Shopping Cart — item list, quantity controls, promo code, and order summary    | Medium     |
+| Checkout Flow — multi-step form with progress indicator and validation         | Hard       |
+
+#### Portfolios & Social
+
+| Idea                                                                           | Difficulty |
+| ------------------------------------------------------------------------------ | ---------- |
+| Developer Portfolio — projects grid, skills, timeline, and contact form        | Medium     |
+| Social Feed — posts, comments, likes, and infinite scroll feel                 | Medium     |
+| Chat Interface — message bubbles, typing indicator, and emoji picker           | Hard       |
+
 > **Don't see your idea?** Use the [New Tool Idea](https://github.com/praveenscience/One-File-Tools/issues/new?template=new-tool-idea.yml) issue template to propose it!
 >
 > **Difficulty labels are assigned by the maintainer** ([@praveenscience](https://github.com/praveenscience)) and are slightly negotiable, feel free to discuss in your issue or PR.
@@ -407,11 +451,12 @@ One-File-Tools/
 │   ├── tools.json        # Tool registry (metadata for landing page)
 │   ├── themes.json       # Theme registry (resume/portfolio metadata)
 │   ├── quests.json       # Quest registry (interactive learning games)
-│   └── quizzes.json      # Quiz registry (multiple-choice challenges)
+│   ├── quizzes.json      # Quiz registry (multiple-choice challenges)
+│   └── design-system.json # Design System registry (UI showcases)
 ├── scripts/              # Build tooling
 │   ├── build.js          # Generates index.html (landing page)
 │   ├── theme-gen.js      # Generates resume/portfolio HTML from .hbs + profile.json
-│   ├── sort-norm.js      # Sorts and normalizes tools.json
+│   ├── sort-norm.js      # Sorts and normalizes JSON registries
 │   ├── sync-readme.js    # Auto-syncs the Available Tools table in ReadMe.md
 │   └── index-template.txt # Landing page template (used by build.js)
 ├── tools/                # Pillar 1: Single-file developer tools
@@ -428,6 +473,8 @@ One-File-Tools/
 │   └── Contributing.md   # Quest-specific contribution guide
 ├── quizzes/              # Pillar 5: Quick multiple-choice challenges
 │   └── Contributing.md   # Quiz-specific contribution guide
+├── design-system/        # Pillar 6: Premium UI showcases with CSS/JS frameworks
+│   └── Contributing.md   # Design System contribution guide
 ├── Contributing.md       # Contribution guide
 ├── index.html            # Generated: landing page (gitignored)
 ├── ReadMe.md             # This file
