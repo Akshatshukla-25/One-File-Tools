@@ -1,0 +1,41 @@
+{
+  "categories": [
+    {
+      "id": "components",
+      "name": "Components",
+      "icon": "🧩",
+      "description": "Reusable UI components — buttons, cards, navbars, forms, and element collections"
+    },
+    {
+      "id": "dashboards",
+      "name": "Dashboards",
+      "icon": "📊",
+      "description": "Admin panels, analytics views, monitoring UIs, and data-driven layouts"
+    },
+    {
+      "id": "e-commerce",
+      "name": "E-Commerce",
+      "icon": "🛒",
+      "description": "Product pages, shopping carts, checkout flows, and storefront layouts"
+    },
+    {
+      "id": "landing-pages",
+      "name": "Landing Pages",
+      "icon": "🚀",
+      "description": "Hero sections, pricing tables, marketing pages, and conversion-focused layouts"
+    },
+    {
+      "id": "portfolios",
+      "name": "Portfolios",
+      "icon": "🎨",
+      "description": "Personal sites, developer portfolios, and creative showcase pages"
+    },
+    {
+      "id": "social",
+      "name": "Social",
+      "icon": "💬",
+      "description": "Feed layouts, profile pages, chat UIs, and community interfaces"
+    }
+  ],
+  "designs": []
+}
