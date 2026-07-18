@@ -39,6 +39,36 @@
   ],
   "designs": [
     {
+      "id": "invoice-receipt-builder",
+      "name": "Invoice / Receipt Builder",
+      "shortDescription": "A professional invoice and receipt builder with custom branding, real-time calculations, dark/light settings, and image download.",
+      "longDescription": "## Invoice / Receipt Builder\n\nAn interactive billing tool for design systems. Build customizable receipts and invoices using instant forms and watch results update in a print-ready document preview.\n\n### Features\n\n- **Interactive Form Inputs**: Fields for company name, contact information, billing target, currency, invoice reference, and date details.\n- **Dynamic Calculations**: Real-time line item adding/deleting with automatic item row updates, taxable balance math, custom flat/percentage discounts, shipping, and remaining balance tracking.\n- **Design Presets**: Multiple accent brand colors (Indigo, Emerald, Ruby, Amber, Slate) and custom font settings (Modern Sans, Elegant Serif, Systems Monospace).\n- **Logo Branding**: Switch between standard design system preset SVGs or upload a custom company logo as a base64 image.\n- **Paid Stamp**: Renders a bold \"PAID\" stamp on the invoice when the remaining balance due reaches zero.\n- **A4 Print Friendly**: Built-in print media queries to print only the document page, formatted perfectly to A4 specifications.\n- **One-click PNG Download**: High-definition download using html2canvas directly onto local storage.",
+      "category": "dashboards",
+      "tags": [
+        "billing",
+        "calculator",
+        "canvas",
+        "dark-mode",
+        "dashboard",
+        "invoice",
+        "receipt",
+        "responsive"
+      ],
+      "techStack": [
+        "CSS3",
+        "html2canvas",
+        "HTML5",
+        "JavaScript",
+        "Tailwind CSS"
+      ],
+      "frameworks": [
+        "html2canvas",
+        "Tailwind CSS"
+      ],
+      "difficulty": "Medium",
+      "status": "live"
+    },
+    {
       "id": "product-search-dropdown",
       "name": "Product Search Dropdown",
       "shortDescription": "A searchable product dropdown with category filters, keyboard navigation, and pastel cream styling.",
