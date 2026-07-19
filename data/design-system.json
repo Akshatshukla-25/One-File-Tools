@@ -286,10 +286,37 @@
       "status": "live"
     },
     {
+      "id": "social-media-feed",
+      "name": "Social Media Feed",
+      "shortDescription": "A Twitter/X-style design-system feed with composer, threaded reply preview, interactive post actions, trending, and dark/light mode.",
+      "longDescription": "## Social Media Feed\n\nA polished social feed layout designed for the Design System pillar...",
+      "category": "social",
+      "tags": [
+        "social",
+        "feed",
+        "dark-mode",
+        "responsive",
+        "tailwind",
+        "vanilla-js",
+        "composer",
+        "threaded-replies"
+      ],
+      "techStack": [
+        "HTML5",
+        "JavaScript",
+        "Tailwind CSS"
+      ],
+      "frameworks": [
+        "Tailwind CSS"
+      ],
+      "difficulty": "Medium",
+      "status": "live"
+    },
+    {
       "id": "premium-multi-step-checkout",
       "name": "Premium Multi-Step Checkout",
       "shortDescription": "A polished multi-step checkout flow with cart review, shipping form validation, payment UI demo, and confirmation screen.",
-      "longDescription": "## Premium Multi-Step Checkout\n\nA premium multi-step checkout experience designed for modern e-commerce flows. Includes a stepper (Cart Review → Shipping → Payment → Confirmation), cart item rendering with quantity controls, shipping autocomplete + saved addresses (demo), payment form UX validation (UI demo only), promo code application, and an order confirmation summary with delivery ETA.\n\n### Features\n\n- **Step-based checkout** with animated panel transitions\n- **Order summary** with subtotal/shipping/tax/promo/total recalculation\n- **Cart Review** UI with quantity controls and remove actions\n- **Shipping** form with inline validation and autocomplete suggestions (demo)\n- **Payment** card input UX: formatting, brand detection, expiry normalization, and local validation (no real payment)\n- **Promo codes** (e.g. DESIGN10, FREESHIP) with live total updates\n- **Confirmation** screen with order number, totals, shipping destination, and ETA (demo)\n- **Dark/light mode** toggle with localStorage persistence\n- **Accessible** structure with ARIA labels and live region messaging\n- **Responsive** layout optimized for mobile to desktop",
+      "longDescription": "## Premium Multi-Step Checkout\n\nA premium multi-step checkout experience designed for modern e-commerce flows...",
       "category": "e-commerce",
       "tags": [
         "checkout",
