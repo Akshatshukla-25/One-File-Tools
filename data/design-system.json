@@ -39,6 +39,32 @@
   ],
   "designs": [
     {
+      "id": "checkout-flow-payment-page",
+      "name": "Checkout Flow / Payment Page",
+      "shortDescription": "A premium multi-step checkout flow with cart review, shipping, payment, and confirmation, featuring a live animated credit card preview.",
+      "longDescription": "## Checkout Flow / Payment Page\n\nA polished, production-ready 4-step checkout experience built with vanilla JavaScript and CSS. Guides the user through Cart Review, Shipping, Payment, and Confirmation with validation gating each step.\n\n### Features\n\n- Animated step indicator with progress fill and checkmarks for completed steps\n- Cart review with quantity steppers and item removal\n- Shipping form with saved-address quick-select chips and floating labels\n- Live animated credit card preview that updates in real time as the user types\n- Automatic card brand detection (Visa, Mastercard, Amex) from the card number\n- Promo code input with live discount calculation\n- Persistent order summary sidebar across all steps\n- Animated SVG success checkmark and order confirmation screen\n- Full dark/light mode support\n- Fully responsive, single-column layout on mobile",
+      "category": "e-commerce",
+      "tags": [
+        "checkout",
+        "dark-mode",
+        "e-commerce",
+        "multi-step-form",
+        "payment",
+        "responsive",
+        "validation"
+      ],
+      "techStack": [
+        "CSS3",
+        "HTML5",
+        "Vanilla JS"
+      ],
+      "frameworks": [
+        "Tailwind CSS"
+      ],
+      "difficulty": "Medium",
+      "status": "live"
+    },
+    {
       "id": "data-table-sorting-filters",
       "name": "Data Table — Sorting & Filters",
       "shortDescription": "A responsive data table with vanilla JS sorting, search, status/plan filters, pagination, and row selection with bulk actions.",
@@ -63,6 +89,7 @@
         "JavaScript",
         "Tailwind CSS"
       ],
+      "frameworks": [],
       "difficulty": "Easy",
       "status": "live"
     },
