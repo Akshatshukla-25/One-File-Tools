@@ -1,1 +1,8 @@
+npx prettier --write tools/*.html
+node scripts/sort-norm.js data/tools.json
+node scripts/sort-norm.js data/themes.json
+node scripts/sort-norm.js data/quests.json
+node scripts/sort-norm.js data/quizzes.json
+node scripts/sort-norm.js data/design-system.json
+git add -u
 node scripts/validate.js
