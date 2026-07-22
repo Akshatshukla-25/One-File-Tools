@@ -3577,9 +3577,9 @@
         "xpath"
       ],
       "techStack": [
-        "CSS",
-        "HTML",
-        "JavaScript"
+        "CSS3",
+        "HTML5",
+        "Vanilla JS"
       ],
       "difficulty": "Medium",
       "status": "live"
