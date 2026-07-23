@@ -607,6 +607,29 @@
       "status": "live"
     },
     {
+      "id": "music-player-ui",
+      "name": "Wavelength Player",
+      "shortDescription": "A responsive music player interface with playlists, search, queue, and playback controls.",
+      "longDescription": "A modern music streaming interface featuring playlist browsing, artist pages, search, liked songs, playback controls, queue management, vinyl-inspired animations, dark/light mode, responsive design, and interactive audio player UI built with Tailwind CSS and vanilla JavaScript.",
+      "category": "dashboards",
+      "tags": [
+        "audio-player",
+        "dark-mode",
+        "dashboard",
+        "media",
+        "music",
+        "playlist",
+        "responsive"
+      ],
+      "techStack": [
+        "HTML",
+        "JavaScript",
+        "Tailwind CSS"
+      ],
+      "difficulty": "Medium",
+      "status": "live"
+    },
+    {
       "id": "weather-instrument-panel",
       "name": "Weather Instrument Panel",
       "shortDescription": "A responsive weather dashboard with forecasts, AQI, charts, and animated weather icons.",
