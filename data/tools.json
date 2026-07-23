@@ -2302,6 +2302,29 @@
       "status": "live"
     },
     {
+      "id": "markdown-table-builder",
+      "name": "Markdown Table Builder & Converter",
+      "shortDescription": "Interactive grid editor to create, format, align, and convert Markdown tables.",
+      "longDescription": "## Markdown Table Builder & Converter\n\nA privacy-first client-side developer utility for constructing, formatting, aligning, and converting Markdown tables directly in the browser.\n\n### Features\n\n- Interactive spreadsheet-like grid editor with inline cell editing\n- Dynamic row and column addition and deletion\n- Per-column alignment selectors (Left, Center, Right)\n- Import raw CSV, TSV, or JSON data directly into editable Markdown tables\n- Toggle between visually padded ASCII aligned columns and compact syntax\n- One-click copy and instant .md file download\n- Dark and light theme modes with localStorage persistence\n- Works 100% offline with zero dependencies",
+      "category": "text",
+      "tags": [
+        "converter",
+        "csv",
+        "generator",
+        "markdown",
+        "table",
+        "text",
+        "utility"
+      ],
+      "techStack": [
+        "CSS3",
+        "HTML5",
+        "Vanilla JS"
+      ],
+      "difficulty": "Medium",
+      "status": "live"
+    },
+    {
       "id": "markdown-table-generator",
       "name": "Markdown Table Generator",
       "shortDescription": "Generate Markdown tables easily with this visual tool.",

@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Interactive grid editor to create, format, align, and convert Markdown tables client-side." />
+    <title>Markdown Table Builder — One File Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script>
+      (() => {
+        try {
+          const saved = localStorage.getItem("md-table-builder-theme");
+          document.documentElement.dataset.theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        } catch {
+          document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+      })();
+    </script>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      :root {
+        color-scheme: light;
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --surface-2: #334155;
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --border: #334155;
+        --border-strong: #475569;
+        --accent: #6366f1;
+        --accent-hover: #4f46e5;
+        --accent-soft: rgba(99, 102, 241, 0.15);
+        --success: #10b981;
+        --danger: #ef4444;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+      }
+      html[data-theme="light"] {
+        color-scheme: light;
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-2: #f1f5f9;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --accent: #4f46e5;
+        --accent-hover: #4338ca;
+        --accent-soft: #eef2ff;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        line-height: 1.5;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .brand-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--accent);
+        color: #fff;
+        border-radius: var(--radius-sm);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      button {
+        font-family: inherit;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 0.5rem 0.875rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.15s ease;
+      }
+      button:hover {
+        background: var(--surface-2);
+        border-color: var(--border-strong);
+      }
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      button.primary:hover {
+        background: var(--accent-hover);
+      }
+      button.danger {
+        color: var(--danger);
+      }
+      button.danger:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: var(--danger);
+      }
+      .app-container {
+        flex: 1;
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        background: var(--surface);
+        padding: 1rem;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+      }
+      .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .toggle-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.875rem;
+        color: var(--muted);
+        cursor: pointer;
+        user-select: none;
+      }
+      .grid-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        overflow-x: auto;
+      }
+      .table-wrapper {
+        overflow-x: auto;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+      }
+      th, td {
+        border: 1px solid var(--border);
+        padding: 0.5rem;
+        min-width: 140px;
+        background: var(--surface);
+      }
+      th {
+        background: var(--surface-2);
+      }
+      .header-cell-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .cell-input {
+        width: 100%;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.875rem;
+      }
+      .cell-input:focus {
+        outline: 2px solid var(--accent);
+        border-color: transparent;
+      }
+      .header-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.375rem;
+      }
+      .align-select {
+        padding: 0.2rem 0.4rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        font-size: 0.75rem;
+      }
+      .btn-icon-sm {
+        padding: 0.25rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        line-height: 1;
+      }
+      .output-section {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      @media (min-width: 900px) {
+        .output-section {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .output-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .card-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin: 0;
+      }
+      textarea.code-output {
+        width: 100%;
+        min-height: 220px;
+        font-family: var(--font-mono);
+        font-size: 0.875rem;
+        padding: 1rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        resize: vertical;
+        white-space: pre;
+      }
+      .preview-box {
+        min-height: 220px;
+        padding: 1rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--bg);
+        overflow-x: auto;
+      }
+      .preview-box table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      .preview-box th, .preview-box td {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+      }
+      .preview-box th {
+        background: var(--surface-2);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        display: grid;
+        place-items: center;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        width: min(600px, 90vw);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .toast {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        font-weight: 500;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.2s ease;
+        z-index: 200;
+      }
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <div class="brand-icon">📊</div>
+        <div>
+          <h1>Markdown Table Builder</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="themeToggle" title="Toggle Theme">
+          <span id="themeIcon">☀️</span>
+        </button>
+        <a href="https://github.com/praveenscience/One-File-Tools" target="_blank" rel="noopener" style="text-decoration: none;">
+          <button type="button">GitHub</button>
+        </a>
+      </div>
+    </header>
+
+    <main class="app-container">
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button id="btnAddRow" class="primary">+ Add Row</button>
+          <button id="btnAddCol" class="primary">+ Add Column</button>
+          <button id="btnImport">📥 Import CSV / JSON</button>
+          <button id="btnSample">⚡ Demo Data</button>
+          <button id="btnClear" class="danger">🗑️ Clear</button>
+        </div>
+        <div class="toolbar-group">
+          <label class="toggle-label">
+            <input type="checkbox" id="togglePadded" checked />
+            Padded ASCII Columns
+          </label>
+        </div>
+      </div>
+
+      <div class="grid-card">
+        <div class="card-header">
+          <h2 class="card-title">Interactive Grid</h2>
+          <span id="gridStats" style="font-size: 0.875rem; color: var(--muted);">3 Rows × 3 Columns</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="gridTable">
+            <thead><tr id="headerRow"></tr></thead>
+            <tbody id="bodyRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="output-section">
+        <div class="output-card">
+          <div class="card-header">
+            <h2 class="card-title">Markdown Output</h2>
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="btnCopy" class="primary">📋 Copy</button>
+              <button id="btnDownload">💾 Download .md</button>
+            </div>
+          </div>
+          <textarea id="markdownOutput" class="code-output" readonly></textarea>
+        </div>
+
+        <div class="output-card">
+          <div class="card-header">
+            <h2 class="card-title">HTML Live Preview</h2>
+          </div>
+          <div id="htmlPreview" class="preview-box"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="modal-backdrop">
+      <div class="modal">
+        <h3 style="margin:0;">Import Data (CSV, TSV, JSON)</h3>
+        <p style="font-size:0.875rem; color:var(--muted); margin:0;">
+          Paste raw CSV, tab-separated values, or a JSON array of objects below.
+        </p>
+        <textarea id="importInput" class="code-output" style="min-height:160px;" placeholder='Name, Age, Role&#10;Alice, 28, Developer&#10;Bob, 32, Designer'></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button id="btnCancelImport">Cancel</button>
+          <button id="btnConfirmImport" class="primary">Parse & Import</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast">Copied to clipboard!</div>
+
+    <script>
+      let state = {
+        headers: ["Feature", "Status", "Priority"],
+        alignments: ["left", "center", "right"],
+        rows: [
+          ["Authentication", "Completed", "High"],
+          ["Dark Mode", "In Progress", "Medium"],
+          ["Export Options", "Planned", "Low"]
+        ],
+        padded: true
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function init() {
+        renderGrid();
+        renderOutput();
+
+        // Event Handlers
+        $("btnAddRow").addEventListener("click", addRow);
+        $("btnAddCol").addEventListener("click", addColumn);
+        $("btnClear").addEventListener("click", clearTable);
+        $("btnSample").addEventListener("click", loadSampleData);
+        $("togglePadded").addEventListener("change", (e) => {
+          state.padded = e.target.checked;
+          renderOutput();
+        });
+
+        $("btnCopy").addEventListener("click", copyMarkdown);
+        $("btnDownload").addEventListener("click", downloadMarkdown);
+
+        $("btnImport").addEventListener("click", () => $("importModal").classList.add("active"));
+        $("btnCancelImport").addEventListener("click", () => $("importModal").classList.remove("active"));
+        $("btnConfirmImport").addEventListener("click", parseImport);
+
+        $("themeToggle").addEventListener("click", toggleTheme);
+      }
+
+      function toggleTheme() {
+        const current = document.documentElement.dataset.theme;
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem("md-table-builder-theme", next);
+        $("themeIcon").textContent = next === "dark" ? "☀️" : "🌙";
+      }
+
+      function renderGrid() {
+        const headerTr = $("headerRow");
+        const bodyTbody = $("bodyRows");
+        headerTr.innerHTML = "";
+        bodyTbody.innerHTML = "";
+
+        // Headers
+        state.headers.forEach((headerText, colIdx) => {
+          const th = document.createElement("th");
+          th.innerHTML = `
+            <div class="header-cell-content">
+              <input type="text" class="cell-input" value="${escapeAttr(headerText)}" oninput="updateHeader(${colIdx}, this.value)">
+              <div class="header-controls">
+                <select class="align-select" onchange="updateAlign(${colIdx}, this.value)">
+                  <option value="left" ${state.alignments[colIdx] === "left" ? "selected" : ""}>Left</option>
+                  <option value="center" ${state.alignments[colIdx] === "center" ? "selected" : ""}>Center</option>
+                  <option value="right" ${state.alignments[colIdx] === "right" ? "selected" : ""}>Right</option>
+                </select>
+                <button class="btn-icon-sm danger" title="Delete Column" onclick="removeColumn(${colIdx})">✕</button>
+              </div>
+            </div>
+          `;
+          headerTr.appendChild(th);
+        });
+
+        // Add action th for row delete
+        const actionTh = document.createElement("th");
+        actionTh.style.width = "50px";
+        actionTh.innerHTML = `<span style="font-size:0.75rem; color:var(--muted);">Actions</span>`;
+        headerTr.appendChild(actionTh);
+
+        // Rows
+        state.rows.forEach((row, rowIdx) => {
+          const tr = document.createElement("tr");
+          row.forEach((cellText, colIdx) => {
+            const td = document.createElement("td");
+            td.innerHTML = `
+              <input type="text" class="cell-input" value="${escapeAttr(cellText)}" oninput="updateCell(${rowIdx}, ${colIdx}, this.value)">
+            `;
+            tr.appendChild(td);
+          });
+
+          // Row delete button
+          const actionTd = document.createElement("td");
+          actionTd.style.textAlign = "center";
+          actionTd.innerHTML = `<button class="btn-icon-sm danger" title="Delete Row" onclick="removeRow(${rowIdx})">✕</button>`;
+          tr.appendChild(actionTd);
+
+          bodyTbody.appendChild(tr);
+        });
+
+        $("gridStats").textContent = `${state.rows.length} Row${state.rows.length === 1 ? "" : "s"} × ${state.headers.length} Column${state.headers.length === 1 ? "" : "s"}`;
+      }
+
+      function updateHeader(colIdx, val) {
+        state.headers[colIdx] = val;
+        renderOutput();
+      }
+
+      function updateAlign(colIdx, val) {
+        state.alignments[colIdx] = val;
+        renderOutput();
+      }
+
+      function updateCell(rowIdx, colIdx, val) {
+        state.rows[rowIdx][colIdx] = val;
+        renderOutput();
+      }
+
+      function addRow() {
+        const newRow = new Array(state.headers.length).fill("");
+        state.rows.push(newRow);
+        renderGrid();
+        renderOutput();
+      }
+
+      function addColumn() {
+        state.headers.push(`Header ${state.headers.length + 1}`);
+        state.alignments.push("left");
+        state.rows.forEach(row => row.push(""));
+        renderGrid();
+        renderOutput();
+      }
+
+      function removeRow(rowIdx) {
+        if (state.rows.length <= 1) return;
+        state.rows.splice(rowIdx, 1);
+        renderGrid();
+        renderOutput();
+      }
+
+      function removeColumn(colIdx) {
+        if (state.headers.length <= 1) return;
+        state.headers.splice(colIdx, 1);
+        state.alignments.splice(colIdx, 1);
+        state.rows.forEach(row => row.splice(colIdx, 1));
+        renderGrid();
+        renderOutput();
+      }
+
+      function clearTable() {
+        state.headers = ["Header 1", "Header 2"];
+        state.alignments = ["left", "left"];
+        state.rows = [["", ""]];
+        renderGrid();
+        renderOutput();
+      }
+
+      function loadSampleData() {
+        state = {
+          headers: ["Project", "Tech Stack", "Stars", "Status"],
+          alignments: ["left", "left", "right", "center"],
+          rows: [
+            ["One File Tools", "Vanilla JS, CSS", "1,250", "Active"],
+            ["FastAPI Microservice", "Python, Docker", "430", "Maintained"],
+            ["React Dashboard", "TypeScript, Tailwind", "890", "Archived"]
+          ],
+          padded: $("togglePadded").checked
+        };
+        renderGrid();
+        renderOutput();
+      }
+
+      function generateMarkdown() {
+        if (state.headers.length === 0) return "";
+
+        const colWidths = state.headers.map((h, colIdx) => {
+          let max = h.length;
+          state.rows.forEach(row => {
+            const cell = row[colIdx] || "";
+            if (cell.length > max) max = cell.length;
+          });
+          return Math.max(max, 3);
+        });
+
+        const pad = (str, len, align) => {
+          if (!state.padded) return str;
+          str = str || "";
+          const diff = len - str.length;
+          if (diff <= 0) return str;
+          if (align === "right") return " ".repeat(diff) + str;
+          if (align === "center") {
+            const left = Math.floor(diff / 2);
+            const right = diff - left;
+            return " ".repeat(left) + str + " ".repeat(right);
+          }
+          return str + " ".repeat(diff);
+        };
+
+        // Headers
+        const headerStr = "| " + state.headers.map((h, i) => pad(h, colWidths[i], state.alignments[i])).join(" | ") + " |";
+
+        // Dividers
+        const dividerStr = "| " + state.alignments.map((align, i) => {
+          const width = state.padded ? colWidths[i] : 3;
+          if (align === "center") return ":" + "-".repeat(Math.max(1, width - 2)) + ":";
+          if (align === "right") return "-".repeat(Math.max(1, width - 1)) + ":";
+          return ":".concat("-".repeat(Math.max(1, width - 1)));
+        }).join(" | ") + " |";
+
+        // Rows
+        const rowStrs = state.rows.map(row => {
+          return "| " + state.headers.map((_, i) => pad(row[i] || "", colWidths[i], state.alignments[i])).join(" | ") + " |";
+        });
+
+        return [headerStr, dividerStr, ...rowStrs].join("\n");
+      }
+
+      function renderOutput() {
+        const md = generateMarkdown();
+        $("markdownOutput").value = md;
+        renderHtmlPreview();
+      }
+
+      function renderHtmlPreview() {
+        const container = $("htmlPreview");
+        let html = "<table><thead><tr>";
+        state.headers.forEach((h, i) => {
+          const align = state.alignments[i];
+          html += `<th style="text-align:${align};">${escapeHtml(h)}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+        state.rows.forEach(row => {
+          html += "<tr>";
+          state.headers.forEach((_, i) => {
+            const align = state.alignments[i];
+            html += `<td style="text-align:${align};">${escapeHtml(row[i] || "")}</td>`;
+          });
+          html += "</tr>";
+        });
+        html += "tbody></table>";
+        container.innerHTML = html;
+      }
+
+      function parseImport() {
+        const raw = $("importInput").value.trim();
+        if (!raw) return;
+
+        try {
+          if (raw.startsWith("[") || raw.startsWith("{")) {
+            const json = JSON.parse(raw);
+            const items = Array.isArray(json) ? json : [json];
+            if (items.length > 0) {
+              state.headers = Object.keys(items[0]);
+              state.alignments = state.headers.map(() => "left");
+              state.rows = items.map(item => state.headers.map(h => String(item[h] ?? "")));
+            }
+          } else {
+            const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+            if (lines.length > 0) {
+              const delimiter = lines[0].includes("\t") ? "\t" : ",";
+              const parsed = lines.map(line => line.split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, "")));
+              state.headers = parsed[0];
+              state.alignments = state.headers.map(() => "left");
+              state.rows = parsed.slice(1);
+            }
+          }
+          renderGrid();
+          renderOutput();
+          $("importModal").classList.remove("active");
+          showToast("Data imported successfully!");
+        } catch (err) {
+          alert("Unable to parse import data. Please check CSV/JSON formatting.");
+        }
+      }
+
+      function copyMarkdown() {
+        const text = $("markdownOutput").value;
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => showToast("Copied Markdown to clipboard!"));
+      }
+
+      function downloadMarkdown() {
+        const text = $("markdownOutput").value;
+        if (!text) return;
+        const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "table.md";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+
+      function showToast(msg) {
+        const toast = $("toast");
+        toast.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+      }
+
+      function escapeAttr(str) {
+        return String(str || "").replace(/"/g, "&quot;");
+      }
+
+      function escapeHtml(str) {
+        return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      window.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
