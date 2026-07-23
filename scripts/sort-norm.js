@@ -27,7 +27,8 @@ const TAG_ALIASES = {
 };
 
 function normalizeTag(tag) {
-  const key = tag.trim().toLowerCase();
+  if (tag === null || tag === undefined) return "";
+  const key = String(tag).trim().toLowerCase();
   return TAG_ALIASES[key] || key;
 }
 
@@ -51,7 +52,7 @@ if (Array.isArray(data.tools)) {
 
   for (const tool of data.tools) {
     if (Array.isArray(tool.tags)) {
-      tool.tags = [...new Set(tool.tags.map(normalizeTag))].sort((a, b) => a.localeCompare(b));
+      tool.tags = [...new Set(tool.tags.map(normalizeTag).filter(Boolean))].sort((a, b) => a.localeCompare(b));
     }
 
     if (Array.isArray(tool.techStack)) {
@@ -66,7 +67,7 @@ if (Array.isArray(data.quests)) {
 
   for (const quest of data.quests) {
     if (Array.isArray(quest.tags)) {
-      quest.tags = [...new Set(quest.tags.map(normalizeTag))].sort((a, b) => a.localeCompare(b));
+      quest.tags = [...new Set(quest.tags.map(normalizeTag).filter(Boolean))].sort((a, b) => a.localeCompare(b));
     }
 
     if (Array.isArray(quest.techStack)) {
@@ -81,7 +82,7 @@ if (Array.isArray(data.designs)) {
 
   for (const design of data.designs) {
     if (Array.isArray(design.tags)) {
-      design.tags = [...new Set(design.tags.map(normalizeTag))].sort((a, b) => a.localeCompare(b));
+      design.tags = [...new Set(design.tags.map(normalizeTag).filter(Boolean))].sort((a, b) => a.localeCompare(b));
     }
 
     if (Array.isArray(design.techStack)) {
