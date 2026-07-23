@@ -19,7 +19,11 @@
       })();
     </script>
     <style>
-      *, *::before, *::after { box-sizing: border-box; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
       :root {
         color-scheme: light;
         --bg: #0f172a;
@@ -36,8 +40,8 @@
         --danger: #ef4444;
         --radius: 12px;
         --radius-sm: 8px;
-        --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-        --font-mono: 'JetBrains Mono', monospace;
+        --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
       }
       html[data-theme="light"] {
         color-scheme: light;
@@ -109,12 +113,16 @@
         cursor: pointer;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.375rem;
         transition: all 0.15s ease;
       }
       button:hover {
         background: var(--surface-2);
         border-color: var(--border-strong);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
       button.primary {
         background: var(--accent);
@@ -187,10 +195,11 @@
         border-collapse: collapse;
         font-size: 0.875rem;
       }
-      th, td {
+      th,
+      td {
         border: 1px solid var(--border);
         padding: 0.5rem;
-        min-width: 140px;
+        min-width: 150px;
         background: var(--surface);
       }
       th {
@@ -219,7 +228,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.375rem;
+        gap: 0.25rem;
       }
       .align-select {
         padding: 0.2rem 0.4rem;
@@ -230,10 +239,16 @@
         font-size: 0.75rem;
       }
       .btn-icon-sm {
-        padding: 0.25rem;
+        padding: 0.2rem 0.35rem;
         border-radius: 4px;
         font-size: 0.75rem;
         line-height: 1;
+      }
+      .row-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
       }
       .output-section {
         display: grid;
@@ -289,7 +304,8 @@
         border-collapse: collapse;
         width: 100%;
       }
-      .preview-box th, .preview-box td {
+      .preview-box th,
+      .preview-box td {
         padding: 0.5rem 0.75rem;
         border: 1px solid var(--border);
       }
@@ -348,17 +364,17 @@
   <body>
     <header>
       <div class="brand">
-        <div class="brand-icon">📊</div>
+        <div class="brand-icon" aria-hidden="true">📊</div>
         <div>
           <h1>Markdown Table Builder</h1>
         </div>
       </div>
       <div class="header-actions">
-        <button id="themeToggle" title="Toggle Theme">
-          <span id="themeIcon">☀️</span>
+        <button id="themeToggle" aria-label="Toggle dark/light theme" title="Toggle Theme">
+          <span id="themeIcon" aria-hidden="true">☀️</span>
         </button>
-        <a href="https://github.com/praveenscience/One-File-Tools" target="_blank" rel="noopener" style="text-decoration: none;">
-          <button type="button">GitHub</button>
+        <a href="https://github.com/praveenscience/One-File-Tools" target="_blank" rel="noopener" style="text-decoration: none">
+          <button type="button" aria-label="View on GitHub">GitHub</button>
         </a>
       </div>
     </header>
@@ -366,16 +382,21 @@
     <main class="app-container">
       <div class="toolbar">
         <div class="toolbar-group">
-          <button id="btnAddRow" class="primary">+ Add Row</button>
-          <button id="btnAddCol" class="primary">+ Add Column</button>
-          <button id="btnImport">📥 Import CSV / JSON</button>
-          <button id="btnSample">⚡ Demo Data</button>
-          <button id="btnClear" class="danger">🗑️ Clear</button>
+          <button id="btnAddRow" class="primary" aria-label="Add Row">+ Add Row</button>
+          <button id="btnAddCol" class="primary" aria-label="Add Column">+ Add Column</button>
+          <button id="btnTranspose" aria-label="Transpose Table">🔄 Transpose</button>
+          <button id="btnImport" aria-label="Import Data">📥 Import CSV / JSON</button>
+          <button id="btnSample" aria-label="Load Demo Data">⚡ Demo Data</button>
+          <button id="btnClear" class="danger" aria-label="Clear Table">🗑️ Clear</button>
         </div>
         <div class="toolbar-group">
           <label class="toggle-label">
             <input type="checkbox" id="togglePadded" checked />
             Padded ASCII Columns
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleEscapePipes" checked />
+            Escape Pipes (\|)
           </label>
         </div>
       </div>
@@ -383,11 +404,13 @@
       <div class="grid-card">
         <div class="card-header">
           <h2 class="card-title">Interactive Grid</h2>
-          <span id="gridStats" style="font-size: 0.875rem; color: var(--muted);">3 Rows × 3 Columns</span>
+          <span id="gridStats" style="font-size: 0.875rem; color: var(--muted)">3 Rows × 3 Columns</span>
         </div>
         <div class="table-wrapper">
-          <table id="gridTable">
-            <thead><tr id="headerRow"></tr></thead>
+          <table id="gridTable" aria-label="Markdown Grid Table">
+            <thead>
+              <tr id="headerRow"></tr>
+            </thead>
             <tbody id="bodyRows"></tbody>
           </table>
         </div>
@@ -397,41 +420,42 @@
         <div class="output-card">
           <div class="card-header">
             <h2 class="card-title">Markdown Output</h2>
-            <div style="display: flex; gap: 0.5rem;">
-              <button id="btnCopy" class="primary">📋 Copy</button>
-              <button id="btnDownload">💾 Download .md</button>
+            <div style="display: flex; gap: 0.5rem">
+              <button id="btnCopy" class="primary" aria-label="Copy Markdown">📋 Copy Markdown</button>
+              <button id="btnCopyHtml" aria-label="Copy HTML Table">🌐 Copy HTML</button>
+              <button id="btnDownload" aria-label="Download .md file">💾 Download .md</button>
             </div>
           </div>
-          <textarea id="markdownOutput" class="code-output" readonly></textarea>
+          <textarea id="markdownOutput" class="code-output" readonly aria-label="Generated Markdown Output"></textarea>
         </div>
 
         <div class="output-card">
           <div class="card-header">
             <h2 class="card-title">HTML Live Preview</h2>
           </div>
-          <div id="htmlPreview" class="preview-box"></div>
+          <div id="htmlPreview" class="preview-box" aria-label="Live HTML Preview"></div>
         </div>
       </div>
     </main>
 
     <!-- Import Modal -->
-    <div id="importModal" class="modal-backdrop">
+    <div id="importModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal">
-        <h3 style="margin:0;">Import Data (CSV, TSV, JSON)</h3>
-        <p style="font-size:0.875rem; color:var(--muted); margin:0;">
-          Paste raw CSV, tab-separated values, or a JSON array of objects below.
-        </p>
-        <textarea id="importInput" class="code-output" style="min-height:160px;" placeholder='Name, Age, Role&#10;Alice, 28, Developer&#10;Bob, 32, Designer'></textarea>
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
-          <button id="btnCancelImport">Cancel</button>
-          <button id="btnConfirmImport" class="primary">Parse & Import</button>
+        <h3 id="modalTitle" style="margin: 0">Import Data (CSV, TSV, JSON)</h3>
+        <p style="font-size: 0.875rem; color: var(--muted); margin: 0">Paste raw CSV, tab-separated values, or a JSON array of objects below.</p>
+        <textarea id="importInput" class="code-output" style="min-height: 160px" aria-label="Import Data Input" placeholder="Name, Age, Role&#10;Alice, 28, Developer&#10;Bob, 32, Designer"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem">
+          <button id="btnCancelImport" aria-label="Cancel Import">Cancel</button>
+          <button id="btnConfirmImport" class="primary" aria-label="Confirm Import">Parse & Import</button>
         </div>
       </div>
     </div>
 
-    <div id="toast" class="toast">Copied to clipboard!</div>
+    <div id="toast" class="toast" role="status" aria-live="polite">Copied to clipboard!</div>
 
     <script>
+      const STORAGE_KEY = "md-table-builder-state";
+
       let state = {
         headers: ["Feature", "Status", "Priority"],
         alignments: ["left", "center", "right"],
@@ -440,26 +464,34 @@
           ["Dark Mode", "In Progress", "Medium"],
           ["Export Options", "Planned", "Low"]
         ],
-        padded: true
+        padded: true,
+        escapePipes: true
       };
 
       const $ = (id) => document.getElementById(id);
 
       function init() {
+        loadSavedState();
         renderGrid();
         renderOutput();
 
         // Event Handlers
         $("btnAddRow").addEventListener("click", addRow);
         $("btnAddCol").addEventListener("click", addColumn);
+        $("btnTranspose").addEventListener("click", transposeTable);
         $("btnClear").addEventListener("click", clearTable);
         $("btnSample").addEventListener("click", loadSampleData);
         $("togglePadded").addEventListener("change", (e) => {
           state.padded = e.target.checked;
-          renderOutput();
+          saveAndRender();
+        });
+        $("toggleEscapePipes").addEventListener("change", (e) => {
+          state.escapePipes = e.target.checked;
+          saveAndRender();
         });
 
         $("btnCopy").addEventListener("click", copyMarkdown);
+        $("btnCopyHtml").addEventListener("click", copyHtml);
         $("btnDownload").addEventListener("click", downloadMarkdown);
 
         $("btnImport").addEventListener("click", () => $("importModal").classList.add("active"));
@@ -467,6 +499,39 @@
         $("btnConfirmImport").addEventListener("click", parseImport);
 
         $("themeToggle").addEventListener("click", toggleTheme);
+
+        // Global Keyboard Shortcuts
+        document.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "r") {
+            e.preventDefault();
+            addRow();
+          }
+          if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "c") {
+            e.preventDefault();
+            addColumn();
+          }
+        });
+      }
+
+      function loadSavedState() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed.headers) && Array.isArray(parsed.rows)) {
+              state = { ...state, ...parsed };
+              $("togglePadded").checked = state.padded;
+              $("toggleEscapePipes").checked = state.escapePipes;
+            }
+          }
+        } catch (e) {}
+      }
+
+      function saveAndRender() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {}
+        renderOutput();
       }
 
       function toggleTheme() {
@@ -488,23 +553,27 @@
           const th = document.createElement("th");
           th.innerHTML = `
             <div class="header-cell-content">
-              <input type="text" class="cell-input" value="${escapeAttr(headerText)}" oninput="updateHeader(${colIdx}, this.value)">
               <div class="header-controls">
-                <select class="align-select" onchange="updateAlign(${colIdx}, this.value)">
+                <button class="btn-icon-sm" title="Move Left" aria-label="Move Column Left" onclick="moveColumn(${colIdx}, -1)">←</button>
+                <button class="btn-icon-sm" title="Move Right" aria-label="Move Column Right" onclick="moveColumn(${colIdx}, 1)">→</button>
+                <button class="btn-icon-sm danger" title="Delete Column" aria-label="Delete Column" onclick="removeColumn(${colIdx})">✕</button>
+              </div>
+              <input type="text" class="cell-input" aria-label="Header ${colIdx + 1}" value="${escapeAttr(headerText)}" oninput="updateHeader(${colIdx}, this.value)">
+              <div class="header-controls">
+                <select class="align-select" aria-label="Align Column ${colIdx + 1}" onchange="updateAlign(${colIdx}, this.value)">
                   <option value="left" ${state.alignments[colIdx] === "left" ? "selected" : ""}>Left</option>
                   <option value="center" ${state.alignments[colIdx] === "center" ? "selected" : ""}>Center</option>
                   <option value="right" ${state.alignments[colIdx] === "right" ? "selected" : ""}>Right</option>
                 </select>
-                <button class="btn-icon-sm danger" title="Delete Column" onclick="removeColumn(${colIdx})">✕</button>
               </div>
             </div>
           `;
           headerTr.appendChild(th);
         });
 
-        // Add action th for row delete
+        // Add action th for row delete / move
         const actionTh = document.createElement("th");
-        actionTh.style.width = "50px";
+        actionTh.style.width = "80px";
         actionTh.innerHTML = `<span style="font-size:0.75rem; color:var(--muted);">Actions</span>`;
         headerTr.appendChild(actionTh);
 
@@ -514,15 +583,20 @@
           row.forEach((cellText, colIdx) => {
             const td = document.createElement("td");
             td.innerHTML = `
-              <input type="text" class="cell-input" value="${escapeAttr(cellText)}" oninput="updateCell(${rowIdx}, ${colIdx}, this.value)">
+              <input type="text" class="cell-input" aria-label="Row ${rowIdx + 1} Column ${colIdx + 1}" value="${escapeAttr(cellText)}" oninput="updateCell(${rowIdx}, ${colIdx}, this.value)">
             `;
             tr.appendChild(td);
           });
 
-          // Row delete button
+          // Row action buttons
           const actionTd = document.createElement("td");
-          actionTd.style.textAlign = "center";
-          actionTd.innerHTML = `<button class="btn-icon-sm danger" title="Delete Row" onclick="removeRow(${rowIdx})">✕</button>`;
+          actionTd.innerHTML = `
+            <div class="row-controls">
+              <button class="btn-icon-sm" title="Move Up" aria-label="Move Row Up" onclick="moveRow(${rowIdx}, -1)">↑</button>
+              <button class="btn-icon-sm" title="Move Down" aria-label="Move Row Down" onclick="moveRow(${rowIdx}, 1)">↓</button>
+              <button class="btn-icon-sm danger" title="Delete Row" aria-label="Delete Row" onclick="removeRow(${rowIdx})">✕</button>
+            </div>
+          `;
           tr.appendChild(actionTd);
 
           bodyTbody.appendChild(tr);
@@ -533,48 +607,97 @@
 
       function updateHeader(colIdx, val) {
         state.headers[colIdx] = val;
-        renderOutput();
+        saveAndRender();
       }
 
       function updateAlign(colIdx, val) {
         state.alignments[colIdx] = val;
-        renderOutput();
+        saveAndRender();
       }
 
       function updateCell(rowIdx, colIdx, val) {
         state.rows[rowIdx][colIdx] = val;
-        renderOutput();
+        saveAndRender();
       }
 
       function addRow() {
         const newRow = new Array(state.headers.length).fill("");
         state.rows.push(newRow);
         renderGrid();
-        renderOutput();
+        saveAndRender();
       }
 
       function addColumn() {
         state.headers.push(`Header ${state.headers.length + 1}`);
         state.alignments.push("left");
-        state.rows.forEach(row => row.push(""));
+        state.rows.forEach((row) => row.push(""));
         renderGrid();
-        renderOutput();
+        saveAndRender();
+      }
+
+      function moveColumn(colIdx, dir) {
+        const target = colIdx + dir;
+        if (target < 0 || target >= state.headers.length) return;
+        const tempH = state.headers[colIdx];
+        state.headers[colIdx] = state.headers[target];
+        state.headers[target] = tempH;
+
+        const tempA = state.alignments[colIdx];
+        state.alignments[colIdx] = state.alignments[target];
+        state.alignments[target] = tempA;
+
+        state.rows.forEach((row) => {
+          const tempR = row[colIdx];
+          row[colIdx] = row[target];
+          row[target] = tempR;
+        });
+
+        renderGrid();
+        saveAndRender();
+      }
+
+      function moveRow(rowIdx, dir) {
+        const target = rowIdx + dir;
+        if (target < 0 || target >= state.rows.length) return;
+        const temp = state.rows[rowIdx];
+        state.rows[rowIdx] = state.rows[target];
+        state.rows[target] = temp;
+        renderGrid();
+        saveAndRender();
       }
 
       function removeRow(rowIdx) {
         if (state.rows.length <= 1) return;
         state.rows.splice(rowIdx, 1);
         renderGrid();
-        renderOutput();
+        saveAndRender();
       }
 
       function removeColumn(colIdx) {
         if (state.headers.length <= 1) return;
         state.headers.splice(colIdx, 1);
         state.alignments.splice(colIdx, 1);
-        state.rows.forEach(row => row.splice(colIdx, 1));
+        state.rows.forEach((row) => row.splice(colIdx, 1));
         renderGrid();
-        renderOutput();
+        saveAndRender();
+      }
+
+      function transposeTable() {
+        if (state.rows.length === 0) return;
+        const oldHeaders = state.headers;
+        const oldRows = state.rows;
+
+        const newHeaders = ["Header", ...oldRows.map((_, i) => `Row ${i + 1}`)];
+        const newAlignments = newHeaders.map(() => "left");
+        const newRows = oldHeaders.map((h, colIdx) => {
+          return [h, ...oldRows.map((r) => r[colIdx] || "")];
+        });
+
+        state.headers = newHeaders;
+        state.alignments = newAlignments;
+        state.rows = newRows;
+        renderGrid();
+        saveAndRender();
       }
 
       function clearTable() {
@@ -582,7 +705,7 @@
         state.alignments = ["left", "left"];
         state.rows = [["", ""]];
         renderGrid();
-        renderOutput();
+        saveAndRender();
       }
 
       function loadSampleData() {
@@ -594,18 +717,30 @@
             ["FastAPI Microservice", "Python, Docker", "430", "Maintained"],
             ["React Dashboard", "TypeScript, Tailwind", "890", "Archived"]
           ],
-          padded: $("togglePadded").checked
+          padded: $("togglePadded").checked,
+          escapePipes: $("toggleEscapePipes").checked
         };
         renderGrid();
-        renderOutput();
+        saveAndRender();
+      }
+
+      function sanitizeText(str) {
+        str = str || "";
+        if (state.escapePipes) {
+          str = str.replace(/\|/g, "\\|");
+        }
+        return str.replace(/\r?\n|\r/g, " ");
       }
 
       function generateMarkdown() {
         if (state.headers.length === 0) return "";
 
-        const colWidths = state.headers.map((h, colIdx) => {
+        const cleanHeaders = state.headers.map(sanitizeText);
+        const cleanRows = state.rows.map((row) => state.headers.map((_, colIdx) => sanitizeText(row[colIdx])));
+
+        const colWidths = cleanHeaders.map((h, colIdx) => {
           let max = h.length;
-          state.rows.forEach(row => {
+          cleanRows.forEach((row) => {
             const cell = row[colIdx] || "";
             if (cell.length > max) max = cell.length;
           });
@@ -627,19 +762,24 @@
         };
 
         // Headers
-        const headerStr = "| " + state.headers.map((h, i) => pad(h, colWidths[i], state.alignments[i])).join(" | ") + " |";
+        const headerStr = "| " + cleanHeaders.map((h, i) => pad(h, colWidths[i], state.alignments[i])).join(" | ") + " |";
 
         // Dividers
-        const dividerStr = "| " + state.alignments.map((align, i) => {
-          const width = state.padded ? colWidths[i] : 3;
-          if (align === "center") return ":" + "-".repeat(Math.max(1, width - 2)) + ":";
-          if (align === "right") return "-".repeat(Math.max(1, width - 1)) + ":";
-          return ":".concat("-".repeat(Math.max(1, width - 1)));
-        }).join(" | ") + " |";
+        const dividerStr =
+          "| " +
+          state.alignments
+            .map((align, i) => {
+              const width = state.padded ? colWidths[i] : 3;
+              if (align === "center") return ":" + "-".repeat(Math.max(1, width - 2)) + ":";
+              if (align === "right") return "-".repeat(Math.max(1, width - 1)) + ":";
+              return ":".concat("-".repeat(Math.max(1, width - 1)));
+            })
+            .join(" | ") +
+          " |";
 
         // Rows
-        const rowStrs = state.rows.map(row => {
-          return "| " + state.headers.map((_, i) => pad(row[i] || "", colWidths[i], state.alignments[i])).join(" | ") + " |";
+        const rowStrs = cleanRows.map((row) => {
+          return "| " + cleanHeaders.map((_, i) => pad(row[i] || "", colWidths[i], state.alignments[i])).join(" | ") + " |";
         });
 
         return [headerStr, dividerStr, ...rowStrs].join("\n");
@@ -659,7 +799,7 @@
           html += `<th style="text-align:${align};">${escapeHtml(h)}</th>`;
         });
         html += "</tr></thead><tbody>";
-        state.rows.forEach(row => {
+        state.rows.forEach((row) => {
           html += "<tr>";
           state.headers.forEach((_, i) => {
             const align = state.alignments[i];
@@ -667,7 +807,7 @@
           });
           html += "</tr>";
         });
-        html += "tbody></table>";
+        html += "</tbody></table>";
         container.innerHTML = html;
       }
 
@@ -682,20 +822,23 @@
             if (items.length > 0) {
               state.headers = Object.keys(items[0]);
               state.alignments = state.headers.map(() => "left");
-              state.rows = items.map(item => state.headers.map(h => String(item[h] ?? "")));
+              state.rows = items.map((item) => state.headers.map((h) => String(item[h] ?? "")));
             }
           } else {
-            const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+            const lines = raw
+              .split("\n")
+              .map((l) => l.trim())
+              .filter(Boolean);
             if (lines.length > 0) {
               const delimiter = lines[0].includes("\t") ? "\t" : ",";
-              const parsed = lines.map(line => line.split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, "")));
+              const parsed = lines.map((line) => line.split(delimiter).map((c) => c.trim().replace(/^["']|["']$/g, "")));
               state.headers = parsed[0];
               state.alignments = state.headers.map(() => "left");
               state.rows = parsed.slice(1);
             }
           }
           renderGrid();
-          renderOutput();
+          saveAndRender();
           $("importModal").classList.remove("active");
           showToast("Data imported successfully!");
         } catch (err) {
@@ -707,6 +850,12 @@
         const text = $("markdownOutput").value;
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => showToast("Copied Markdown to clipboard!"));
+      }
+
+      function copyHtml() {
+        const html = $("htmlPreview").innerHTML;
+        if (!html) return;
+        navigator.clipboard.writeText(html).then(() => showToast("Copied HTML Table to clipboard!"));
       }
 
       function downloadMarkdown() {
@@ -732,7 +881,10 @@
       }
 
       function escapeHtml(str) {
-        return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
       }
 
       window.addEventListener("DOMContentLoaded", init);
