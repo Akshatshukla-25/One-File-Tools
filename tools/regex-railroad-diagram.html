@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Visual syntax flowchart generator and plain-English explainer for Regular Expressions." />
+    <title>RegEx Railroad Diagram & Explainer — One File Tools</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script>
+      (() => {
+        try {
+          const saved = localStorage.getItem("regex-diagram-theme");
+          document.documentElement.dataset.theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        } catch {
+          document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+      })();
+    </script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      :root {
+        color-scheme: light;
+        --bg: #0f172a;
+        --surface: #1e293b;
+        --surface-2: #334155;
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --border: #334155;
+        --border-strong: #475569;
+        --accent: #6366f1;
+        --accent-hover: #4f46e5;
+        --accent-soft: rgba(99, 102, 241, 0.15);
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --radius: 12px;
+        --radius-sm: 8px;
+        --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+      }
+      html[data-theme="light"] {
+        color-scheme: light;
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-2: #f1f5f9;
+        --text: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --accent: #4f46e5;
+        --accent-hover: #4338ca;
+        --accent-soft: #eef2ff;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        line-height: 1.5;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .brand-icon {
+        width: 38px;
+        height: 38px;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: #fff;
+        border-radius: var(--radius-sm);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      button {
+        font-family: inherit;
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.55rem 0.95rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-strong);
+        background: var(--surface-2);
+        color: var(--text);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+        transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
+      }
+      button:hover {
+        background: var(--border);
+        border-color: var(--muted);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      button.primary {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+      }
+      button.primary:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
+      }
+      .app-container {
+        flex: 1;
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .input-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      }
+      .regex-input-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .regex-field-wrapper {
+        flex: 1;
+        min-width: 280px;
+        display: flex;
+        align-items: center;
+        background: var(--bg);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        padding: 0 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 1rem;
+      }
+      .regex-field-wrapper:focus-within {
+        outline: 2px solid var(--accent);
+      }
+      .regex-slash {
+        color: var(--muted);
+        font-weight: 700;
+        user-select: none;
+      }
+      .regex-input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1rem;
+        padding: 0.65rem 0.35rem;
+      }
+      .regex-input:focus {
+        outline: none;
+      }
+      .flags-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        user-select: none;
+      }
+      .flag-checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-family: var(--font-mono);
+        font-size: 0.875rem;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .flag-checkbox input {
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+      .preset-select {
+        padding: 0.6rem 0.8rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-strong);
+        background: var(--surface-2);
+        color: var(--text);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .preset-select:focus {
+        outline: 2px solid var(--accent);
+      }
+
+      .diagram-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      .card-title {
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+      }
+      .canvas-wrapper {
+        min-height: 260px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 1.5rem;
+        overflow-x: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      svg.railroad-svg {
+        max-width: 100%;
+        height: auto;
+      }
+      .railroad-svg text {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        fill: var(--text);
+      }
+      .railroad-svg rect.token-bg {
+        fill: var(--surface-2);
+        stroke: var(--border-strong);
+        stroke-width: 1.5px;
+        rx: 6px;
+      }
+      .railroad-svg rect.group-bg {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+        stroke-width: 1.5px;
+        stroke-dasharray: 4 3;
+        rx: 8px;
+      }
+      .railroad-svg path.rail-line {
+        stroke: #818cf8;
+        stroke-width: 2.5px;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .railroad-svg circle.terminal-node {
+        fill: #6366f1;
+        stroke: #ffffff;
+        stroke-width: 2px;
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      @media (min-width: 900px) {
+        .content-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .explainer-card,
+      .tester-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .explainer-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      .explainer-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.6rem 0.8rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+      }
+      .token-badge {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.2rem 0.45rem;
+        border-radius: 4px;
+        background: var(--accent-soft);
+        color: #818cf8;
+        white-space: nowrap;
+      }
+      .token-desc {
+        font-size: 0.875rem;
+        color: var(--text);
+      }
+
+      .test-input {
+        width: 100%;
+        padding: 0.65rem 0.85rem;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+      }
+      .test-input:focus {
+        outline: 2px solid var(--accent);
+      }
+      .match-status {
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .match-status.valid {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+      .match-status.invalid {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        font-weight: 600;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.2s ease;
+        z-index: 200;
+      }
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🚂</div>
+        <div>
+          <h1>RegEx Railroad Diagram & Explainer</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="themeToggle" aria-label="Toggle dark/light theme" title="Toggle Theme">
+          <span id="themeIcon" aria-hidden="true">☀️</span>
+        </button>
+        <a href="https://github.com/praveenscience/One-File-Tools" target="_blank" rel="noopener" style="text-decoration: none">
+          <button type="button" aria-label="View on GitHub">GitHub</button>
+        </a>
+      </div>
+    </header>
+
+    <main class="app-container">
+      <!-- RegEx Input Card -->
+      <section class="input-card">
+        <div class="card-header">
+          <h2 class="card-title">Regular Expression Input</h2>
+          <select id="presetSelect" class="preset-select" aria-label="Load RegEx Preset">
+            <option value="">-- Load RegEx Preset --</option>
+            <option value="email">Email Address</option>
+            <option value="url">Web URL Link</option>
+            <option value="ipv4">IPv4 Address</option>
+            <option value="hex">Hex Color Code</option>
+            <option value="phone">US Phone Number</option>
+            <option value="date">ISO Date (YYYY-MM-DD)</option>
+          </select>
+        </div>
+        <div class="regex-input-row">
+          <div class="regex-field-wrapper">
+            <span class="regex-slash">/</span>
+            <input type="text" id="regexPattern" class="regex-input" value="^([a-zA-Z0-9._%-]+)@([a-zA-Z0-9.-]+)\.([a-zA-Z]{2,6})$" aria-label="RegEx Pattern Input" placeholder="Enter RegEx pattern..." />
+            <span class="regex-slash">/</span>
+          </div>
+          <div class="flags-group">
+            <label class="flag-checkbox"><input type="checkbox" id="flagG" /> g</label>
+            <label class="flag-checkbox"><input type="checkbox" id="flagI" checked /> i</label>
+            <label class="flag-checkbox"><input type="checkbox" id="flagM" /> m</label>
+            <label class="flag-checkbox"><input type="checkbox" id="flagS" /> s</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Railroad Visualizer Card -->
+      <section class="diagram-card">
+        <div class="card-header">
+          <h2 class="card-title">Railroad Diagram Flowchart</h2>
+          <div style="display: flex; gap: 0.5rem">
+            <button id="btnCopyJs" aria-label="Copy JavaScript Code">📋 Copy JS Code</button>
+            <button id="btnExportSvg" class="primary" aria-label="Export SVG Image">💾 Export SVG</button>
+          </div>
+        </div>
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <div id="svgContainer"></div>
+        </div>
+      </section>
+
+      <!-- Explainer & Match Tester Grid -->
+      <div class="content-grid">
+        <section class="explainer-card">
+          <div class="card-header">
+            <h2 class="card-title">Plain-English Breakdown</h2>
+          </div>
+          <div id="explainerList" class="explainer-list"></div>
+        </section>
+
+        <section class="tester-card">
+          <div class="card-header">
+            <h2 class="card-title">Live Match Inspector</h2>
+          </div>
+          <input type="text" id="testString" class="test-input" value="user.name@example.com" aria-label="Test String Input" placeholder="Type test string..." />
+          <div id="matchStatus" class="match-status valid">
+            <span>✓ Match Found!</span>
+          </div>
+          <div id="captureGroups" style="display: flex; flex-direction: column; gap: 0.4rem; font-family: var(--font-mono); font-size: 0.85rem"></div>
+        </section>
+      </div>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite">Copied to clipboard!</div>
+
+    <script>
+      const PRESETS = {
+        email: { pattern: "^([a-zA-Z0-9._%-]+)@([a-zA-Z0-9.-]+)\\.([a-zA-Z]{2,6})$", flags: "i", test: "hello@domain.com" },
+        url: { pattern: "^https?:\\/\\/([a-zA-Z0-9.-]+)(:[0-9]+)?(\\/.*)?$", flags: "i", test: "https://one-file-tools.pages.dev/tools" },
+        ipv4: { pattern: "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", flags: "", test: "192.168.1.1" },
+        hex: { pattern: "^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6})$", flags: "i", test: "#6366f1" },
+        phone: { pattern: "^\\+?\\d{1,4}?[-.\\s]?\\(?\\d{1,3}?\\)?[-.\\s]?\\d{1,4}[-.\\s]?\\d{1,9}$", flags: "", test: "+1 (555) 019-2834" },
+        date: { pattern: "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$", flags: "", test: "2026-07-24" }
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function init() {
+        // Handlers
+        $("regexPattern").addEventListener("input", update);
+        $("flagG").addEventListener("change", update);
+        $("flagI").addEventListener("change", update);
+        $("flagM").addEventListener("change", update);
+        $("flagS").addEventListener("change", update);
+        $("testString").addEventListener("input", updateMatch);
+        $("presetSelect").addEventListener("change", loadPreset);
+
+        $("btnCopyJs").addEventListener("click", copyJsCode);
+        $("btnExportSvg").addEventListener("click", exportSvg);
+        $("themeToggle").addEventListener("click", toggleTheme);
+
+        update();
+      }
+
+      function toggleTheme() {
+        const current = document.documentElement.dataset.theme;
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem("regex-diagram-theme", next);
+        $("themeIcon").textContent = next === "dark" ? "☀️" : "🌙";
+        update();
+      }
+
+      function loadPreset(e) {
+        const preset = PRESETS[e.target.value];
+        if (!preset) return;
+        $("regexPattern").value = preset.pattern;
+        $("flagG").checked = preset.flags.includes("g");
+        $("flagI").checked = preset.flags.includes("i");
+        $("flagM").checked = preset.flags.includes("m");
+        $("flagS").checked = preset.flags.includes("s");
+        $("testString").value = preset.test;
+        update();
+      }
+
+      function getFlags() {
+        let f = "";
+        if ($("flagG").checked) f += "g";
+        if ($("flagI").checked) f += "i";
+        if ($("flagM").checked) f += "m";
+        if ($("flagS").checked) f += "s";
+        return f;
+      }
+
+      function tokenize(pattern) {
+        const tokens = [];
+        let i = 0;
+
+        while (i < pattern.length) {
+          const char = pattern[i];
+
+          if (char === "^") {
+            tokens.push({ type: "anchor", raw: "^", desc: "Asserts position at start of line" });
+            i++;
+          } else if (char === "$") {
+            tokens.push({ type: "anchor", raw: "$", desc: "Asserts position at end of line" });
+            i++;
+          } else if (char === "\\") {
+            const next = pattern[i + 1] || "";
+            let desc = `Escaped character '${next}'`;
+            if (next === "d") desc = "Digit character [0-9]";
+            else if (next === "w") desc = "Word character [a-zA-Z0-9_]";
+            else if (next === "s") desc = "Whitespace character";
+            else if (next === "D") desc = "Non-digit character";
+            else if (next === "W") desc = "Non-word character";
+            else if (next === "S") desc = "Non-whitespace character";
+            tokens.push({ type: "escape", raw: "\\" + next, desc });
+            i += 2;
+          } else if (char === "[") {
+            let end = pattern.indexOf("]", i);
+            if (end === -1) end = pattern.length;
+            const content = pattern.slice(i, end + 1);
+            tokens.push({ type: "charset", raw: content, desc: `Character set matching ${content}` });
+            i = end + 1;
+          } else if (char === "(") {
+            tokens.push({ type: "group-open", raw: "(", desc: "Start of Group" });
+            i++;
+          } else if (char === ")") {
+            tokens.push({ type: "group-close", raw: ")", desc: "End of Group" });
+            i++;
+          } else if (char === "+" || char === "*" || char === "?") {
+            let desc = "Matches 1 or more times";
+            if (char === "*") desc = "Matches 0 or more times";
+            if (char === "?") desc = "Matches 0 or 1 time (optional)";
+            tokens.push({ type: "quantifier", raw: char, desc });
+            i++;
+          } else if (char === "{") {
+            let end = pattern.indexOf("}", i);
+            if (end === -1) end = pattern.length;
+            const content = pattern.slice(i, end + 1);
+            tokens.push({ type: "quantifier", raw: content, desc: `Quantifier ${content}` });
+            i = end + 1;
+          } else if (char === "|") {
+            tokens.push({ type: "alternation", raw: "|", desc: "Alternation (OR operator)" });
+            i++;
+          } else {
+            tokens.push({ type: "literal", raw: char, desc: `Literal character '${char}'` });
+            i++;
+          }
+        }
+        return tokens;
+      }
+
+      function update() {
+        const pattern = $("regexPattern").value;
+        const flags = getFlags();
+        const tokens = tokenize(pattern);
+
+        renderDiagram(tokens);
+        renderExplainer(tokens);
+        updateMatch();
+      }
+
+      function renderDiagram(tokens) {
+        const container = $("svgContainer");
+        container.innerHTML = "";
+
+        let curX = 40;
+        const curY = 60;
+        const nodes = [];
+
+        // Start node
+        nodes.push(`<circle cx="${curX}" cy="${curY}" r="8" class="terminal-node" />`);
+        curX += 25;
+
+        tokens.forEach((t) => {
+          const width = Math.max(t.raw.length * 10 + 20, 36);
+          const height = 32;
+
+          nodes.push(`<path d="M ${curX - 10} ${curY} L ${curX} ${curY}" class="rail-line" />`);
+
+          if (t.type === "group-open" || t.type === "group-close") {
+            nodes.push(`<circle cx="${curX + width / 2}" cy="${curY}" r="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5" />`);
+            nodes.push(`<text x="${curX + width / 2}" y="${curY + 4}" text-anchor="middle" font-weight="bold">${escapeHtml(t.raw)}</text>`);
+          } else {
+            nodes.push(`<rect x="${curX}" y="${curY - height / 2}" width="${width}" height="${height}" class="token-bg" />`);
+            nodes.push(`<text x="${curX + width / 2}" y="${curY + 4}" text-anchor="middle">${escapeHtml(t.raw)}</text>`);
+          }
+
+          curX += width + 15;
+        });
+
+        // End node
+        nodes.push(`<path d="M ${curX - 15} ${curY} L ${curX} ${curY}" class="rail-line" />`);
+        nodes.push(`<circle cx="${curX + 8}" cy="${curY}" r="8" class="terminal-node" />`);
+        curX += 30;
+
+        const totalWidth = Math.max(curX, 400);
+
+        const svgHtml = `
+          <svg class="railroad-svg" width="${totalWidth}" height="120" viewBox="0 0 ${totalWidth} 120" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 10 ${curY} L ${totalWidth - 10} ${curY}" class="rail-line" style="stroke-opacity:0.3;" />
+            ${nodes.join("\n")}
+          </svg>
+        `;
+        container.innerHTML = svgHtml;
+      }
+
+      function renderExplainer(tokens) {
+        const list = $("explainerList");
+        list.innerHTML = "";
+
+        if (tokens.length === 0) {
+          list.innerHTML = '<div class="explainer-item"><span class="token-desc">Enter a RegEx pattern to see the structural breakdown.</span></div>';
+          return;
+        }
+
+        tokens.forEach((t) => {
+          const item = document.createElement("div");
+          item.className = "explainer-item";
+          item.innerHTML = `
+            <span class="token-badge">${escapeHtml(t.raw)}</span>
+            <span class="token-desc">${escapeHtml(t.desc)}</span>
+          `;
+          list.appendChild(item);
+        });
+      }
+
+      function updateMatch() {
+        const pattern = $("regexPattern").value;
+        const flags = getFlags();
+        const testStr = $("testString").value;
+        const status = $("matchStatus");
+        const groupsDiv = $("captureGroups");
+
+        groupsDiv.innerHTML = "";
+
+        try {
+          const regex = new RegExp(pattern, flags);
+          const match = regex.exec(testStr);
+
+          if (match) {
+            status.className = "match-status valid";
+            status.innerHTML = `<span>✓ Full Match: "${escapeHtml(match[0])}"</span>`;
+
+            if (match.length > 1) {
+              match.slice(1).forEach((g, idx) => {
+                const grp = document.createElement("div");
+                grp.style.color = "var(--muted)";
+                grp.innerHTML = `Group #${idx + 1}: <strong style="color:var(--text);">${escapeHtml(g)}</strong>`;
+                groupsDiv.appendChild(grp);
+              });
+            }
+          } else {
+            status.className = "match-status invalid";
+            status.innerHTML = `<span>✕ No Match</span>`;
+          }
+        } catch (err) {
+          status.className = "match-status invalid";
+          status.innerHTML = `<span>⚠️ RegEx Error: ${escapeHtml(err.message)}</span>`;
+        }
+      }
+
+      function copyJsCode() {
+        const pattern = $("regexPattern").value;
+        const flags = getFlags();
+        const code = `const regex = /${pattern}/${flags};`;
+        navigator.clipboard.writeText(code).then(() => showToast("Copied JS Code to clipboard!"));
+      }
+
+      function exportSvg() {
+        const svg = $("svgContainer").querySelector("svg");
+        if (!svg) return;
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svg);
+        const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "regex-railroad-diagram.svg";
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+
+      function showToast(msg) {
+        const toast = $("toast");
+        toast.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+      }
+
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      window.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
