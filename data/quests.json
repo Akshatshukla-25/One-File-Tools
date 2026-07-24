@@ -945,6 +945,30 @@
       "status": "live"
     },
     {
+      "id": "the-reconciler",
+      "name": "The Reconciler",
+      "shortDescription": "A Victorian manor horror where the house is a live React component tree — fix one-way props, state re-renders, effect cleanup, and reconciliation keys floor by floor while a living fiber-tree diagram reflects it all in real time.",
+      "longDescription": "## The Reconciler\n\n2 AM. A haunted house app's deploy goes wrong, and you get pulled inside it. The foyer is `<App>`; every door leads to a child. Something called The Reconciler lives in the walls — the process deciding what changes and what stays when the tree re-renders — and it has been running wrong for years. Duplicated furniture, doors that forget their state, rooms rebuilding into oblivion. Escape by fixing the house's React, floor by floor.\n\n### Features\n\n- Living fiber-tree diagram rendered alongside the manor cross-section, reflecting the actual component tree the player is standing inside — nodes pulse on render, split on new children, rewire on reorder.\n- Four floors teaching distinct React concepts: one-way prop flow (carrying a lantern down through nested rooms without setting it down), state updates triggering re-renders (an unguarded render loop that rebuilds a room faster and faster), `useEffect` dependencies and cleanup (a stale-closure ghost and a torn-down room whose effect never cleaned up), and keys in reconciliation (a shuffling portrait hallway that swaps identities without stable keys).\n- Canvas-based diff-spark particle system marking the moment the Reconciler decides to patch versus replace a node.\n- Framer Motion room-to-room morphs so floors dissolve into each other rather than cutting between screens.\n- Layered parallax SVG art for the manor interior — candlelight, dust motes, warping wallpaper that glitches when the Reconciler misbehaves.\n- Distinct horror palette: aged brass and candlelight amber against near-black oak, with a single sickly violet reserved for The Reconciler itself, plus full `prefers-reduced-motion` support.",
+      "category": "react-fundamentals",
+      "tags": [
+        "hooks",
+        "horror",
+        "props",
+        "react",
+        "reconciliation",
+        "state"
+      ],
+      "techStack": [
+        "Canvas",
+        "CSS3",
+        "Framer Motion",
+        "HTML5",
+        "React"
+      ],
+      "difficulty": "Hard",
+      "status": "live"
+    },
+    {
       "id": "type-coercion-dungeon",
       "name": "Type Coercion Dungeon",
       "shortDescription": "A roguelike where JavaScript's type coercion rules are the combat system — predict whether each live expression coerces to true or false before it coerces you.",

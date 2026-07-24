@@ -1,0 +1,1702 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Reconciler — a vanilla JS horror quest</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕯</text></svg>" />
+
+    <!-- ══════════════════════════════════════════════════════════════
+     THE RECONCILER — vanilla edition
+     A Victorian manor that is, structurally, a live component tree —
+     rendered by a real, hand-written virtual-DOM reconciler living
+     right here in this file. No React. No Babel. No build step.
+     ══════════════════════════════════════════════════════════════ -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Cormorant:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+    <style>
+      /* ══════════════════════════════════════════════════════════════
+   THE MANOR AT NIGHT
+   Palette: near-black oak · aged brass · candlelight amber ·
+   parchment ink · a single sickly violet reserved for the thing
+   in the walls that decides what gets to stay.
+   ══════════════════════════════════════════════════════════════ */
+      :root {
+        --oak: #100c08;
+        --oak-mid: #1c150e;
+        --oak-edge: #33261a;
+        --brass: #b08d57;
+        --brass-dim: #6e5738;
+        --candle: #eab868;
+        --candle-glow: rgba(234, 184, 104, 0.35);
+        --parchment: #e3d3b4;
+        --ink: #cdbb98;
+        --ink-dim: #7a6b52;
+        --recon: #9b7fc4;
+        --recon-deep: #4d3566;
+        --recon-sick: #7c8f5e;
+        --danger: #b5533f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        background: radial-gradient(ellipse 140% 100% at 50% -20%, #241a10 0%, transparent 55%), var(--oak);
+        color: var(--ink);
+        font-family: "Cormorant", Georgia, serif;
+        font-size: 16px;
+        overflow: hidden;
+      }
+
+      ::selection {
+        background: #3a2a15;
+        color: var(--parchment);
+      }
+
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+      }
+      .display {
+        font-family: "Cormorant SC", "Cormorant", serif;
+        letter-spacing: 0.04em;
+      }
+
+      /* ── App frame ─────────────────────────────────────────────────── */
+      #app {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 10;
+      }
+
+      /* ── HUD ───────────────────────────────────────────────────────── */
+      #hud {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 9px 16px;
+        border-bottom: 1px solid var(--oak-edge);
+        background: rgba(16, 12, 8, 0.88);
+      }
+      .hud-label {
+        font-size: 10.5px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+      }
+      #coherenceWrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 220px;
+        flex: 1;
+      }
+      #coherenceBar {
+        flex: 1;
+        height: 10px;
+        border: 1px solid var(--oak-edge);
+        border-radius: 2px;
+        background: #0a0705;
+        overflow: hidden;
+        position: relative;
+      }
+      #coherenceFill {
+        height: 100%;
+        transition:
+          width 0.5s ease,
+          background 0.5s ease;
+      }
+      #coherenceNum {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        width: 42px;
+        text-align: right;
+      }
+      .hud-chip {
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        border: 1px solid var(--oak-edge);
+        border-radius: 3px;
+        padding: 4px 9px;
+        color: var(--brass);
+        background: var(--oak-mid);
+        font-family: "JetBrains Mono", monospace;
+      }
+      #floorChip {
+        flex: 1;
+        text-align: right;
+        border: none;
+        background: none;
+        color: var(--candle);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+      }
+
+      /* ── Stage: manor panel + fiber tree panel ────────────────────── */
+      #stage {
+        flex: 1;
+        display: flex;
+        gap: 10px;
+        padding: 10px;
+        min-height: 0;
+      }
+      #manor {
+        flex: 1.15;
+        min-width: 0;
+        position: relative;
+        border: 1px solid var(--oak-edge);
+        border-radius: 4px;
+        background: linear-gradient(180deg, rgba(28, 21, 14, 0.92), rgba(16, 12, 8, 0.95));
+        overflow-y: auto;
+        padding: 20px 22px;
+      }
+      #treePanel {
+        flex: 0.85;
+        min-width: 260px;
+        position: relative;
+        border: 1px solid var(--oak-edge);
+        border-radius: 4px;
+        background: radial-gradient(ellipse at 50% 0%, #1a130c 0%, #0e0a06 70%);
+        display: flex;
+        flex-direction: column;
+      }
+      .panel-label {
+        font-size: 10.5px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--ink-dim);
+        padding: 9px 12px 4px;
+        font-family: "JetBrains Mono", monospace;
+      }
+      #treeSvgWrap {
+        flex: 1;
+        position: relative;
+      }
+      #treeSvg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #diffCanvas {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* fiber tree node/edge styling (drawn via SVG, classes applied via JS) */
+      .fnode-shell {
+        transition: filter 0.4s;
+      }
+      .fnode-ring {
+        fill: none;
+        stroke-width: 2;
+        transition:
+          stroke 0.4s,
+          opacity 0.4s;
+      }
+      .fnode-dot {
+        transition:
+          fill 0.4s,
+          r 0.3s;
+      }
+      .fnode-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9.5px;
+        fill: var(--ink-dim);
+      }
+      .fedge {
+        stroke: var(--oak-edge);
+        stroke-width: 1.4;
+        fill: none;
+        transition:
+          stroke 0.4s,
+          stroke-width 0.4s;
+      }
+      .fedge.active {
+        stroke: var(--candle);
+        stroke-width: 2.2;
+      }
+      .fedge.recon {
+        stroke: var(--recon);
+        stroke-width: 2.2;
+      }
+
+      /* ── Whisper log ──────────────────────────────────────────────── */
+      #whisperPanel {
+        height: 132px;
+        border-top: 1px solid var(--oak-edge);
+        background: #0a0705;
+        display: flex;
+        flex-direction: column;
+      }
+      #whisperBar {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        color: var(--ink-dim);
+        padding: 4px 14px;
+        border-bottom: 1px solid var(--oak-edge);
+        text-transform: uppercase;
+        font-family: "JetBrains Mono", monospace;
+      }
+      #whisperOut {
+        flex: 1;
+        overflow-y: auto;
+        padding: 7px 14px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .w-log {
+        color: var(--ink);
+      }
+      .w-ok {
+        color: #9fd88a;
+      }
+      .w-warn {
+        color: var(--brass);
+      }
+      .w-err {
+        color: var(--danger);
+      }
+      .w-recon {
+        color: var(--recon);
+        font-style: italic;
+        text-shadow: 0 0 6px rgba(155, 127, 196, 0.4);
+      }
+      .w-dim {
+        color: var(--ink-dim);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11.5px;
+      }
+
+      /* ── Manor content: rooms, doors, controls ───────────────────── */
+      .brief {
+        color: var(--ink);
+        line-height: 1.65;
+        font-size: 15px;
+        margin: 0 0 14px;
+      }
+      .brief b {
+        color: var(--candle);
+        font-weight: 600;
+      }
+      .brief code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.85em;
+        color: var(--parchment);
+        background: rgba(234, 184, 104, 0.08);
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+      .brief .sick {
+        color: var(--recon);
+      }
+
+      .room-frame {
+        border: 1px solid var(--oak-edge);
+        border-radius: 5px;
+        background: radial-gradient(ellipse 80% 60% at 50% 20%, rgba(234, 184, 104, 0.06), transparent 70%), #150f09;
+        padding: 18px;
+        margin-bottom: 14px;
+        position: relative;
+        overflow: hidden;
+      }
+      .room-frame.buggy {
+        border-color: var(--danger);
+        animation: room-shake-loop 0.5s infinite;
+      }
+      .room-frame.fixed {
+        border-color: #4d6e42;
+      }
+      .room-frame.recon-touched {
+        border-color: var(--recon);
+      }
+      @keyframes room-shake-loop {
+        25% {
+          transform: translate(-2px, 1px);
+        }
+        75% {
+          transform: translate(2px, -1px);
+        }
+      }
+
+      .door-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 10px 0;
+      }
+      .door {
+        flex: 1;
+        min-width: 130px;
+        text-align: center;
+        border: 1px solid var(--oak-edge);
+        border-radius: 5px;
+        padding: 12px 8px;
+        background: #120d08;
+      }
+      .door .glyph {
+        font-size: 30px;
+        display: block;
+        margin-bottom: 5px;
+        filter: grayscale(0.5) brightness(0.75);
+      }
+      .door.open .glyph {
+        filter: none;
+      }
+      .door.open {
+        border-color: #4d6e42;
+        box-shadow: 0 0 16px rgba(159, 216, 138, 0.18);
+      }
+      .door-name {
+        font-size: 12.5px;
+        color: var(--parchment);
+      }
+      .door-rule {
+        font-size: 10.5px;
+        color: var(--ink-dim);
+        margin-top: 3px;
+        line-height: 1.4;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .act-btn,
+      .btn {
+        font-family: "Cormorant", serif;
+        font-weight: 600;
+        font-size: 14.5px;
+        cursor: pointer;
+        border: 1.5px solid var(--brass);
+        border-radius: 4px;
+        background: transparent;
+        color: var(--brass);
+        padding: 8px 16px;
+        letter-spacing: 0.03em;
+        margin: 3px 6px 3px 0;
+        transition:
+          background 0.15s,
+          transform 0.08s,
+          opacity 0.2s,
+          border-color 0.2s;
+      }
+      .act-btn:hover:not(:disabled),
+      .btn:hover:not(:disabled) {
+        background: rgba(176, 141, 87, 0.12);
+      }
+      .act-btn:active:not(:disabled),
+      .btn:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+      .act-btn:disabled,
+      .btn:disabled {
+        opacity: 0.32;
+        cursor: not-allowed;
+      }
+      .act-btn.wrong {
+        border-color: var(--danger);
+        color: #e2a396;
+      }
+      .act-btn.correct-hint {
+        border-color: #4d6e42;
+        color: #b7dba3;
+      }
+      .btn.title-btn {
+        font-size: 17px;
+        padding: 11px 26px;
+        border-width: 2px;
+      }
+      .btn.recon-btn {
+        border-color: var(--recon);
+        color: var(--recon);
+      }
+      .btn.recon-btn:hover:not(:disabled) {
+        background: rgba(155, 127, 196, 0.12);
+      }
+
+      .chip-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 10px 0;
+      }
+      .opt-chip {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        cursor: pointer;
+        border: 1px solid var(--oak-edge);
+        border-radius: 4px;
+        background: #120d08;
+        color: var(--ink);
+        padding: 7px 11px;
+        transition:
+          border-color 0.15s,
+          color 0.15s,
+          transform 0.08s;
+      }
+      .opt-chip:hover {
+        border-color: var(--brass);
+        color: var(--brass);
+        transform: translateY(-1px);
+      }
+      .opt-chip.picked {
+        border-color: var(--candle);
+        color: var(--candle);
+        box-shadow: 0 0 10px rgba(234, 184, 104, 0.25);
+      }
+
+      /* Portraits (floor 4) */
+      .hall-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 16px 0;
+      }
+      .portrait {
+        width: 92px;
+        text-align: center;
+        position: relative;
+      }
+      .portrait .frame-svg {
+        display: block;
+        margin: 0 auto;
+      }
+      .portrait .p-name {
+        font-size: 11.5px;
+        color: var(--parchment);
+        margin-top: 4px;
+      }
+      .portrait .p-remove {
+        margin-top: 5px;
+        font-size: 10.5px;
+        font-family: "JetBrains Mono", monospace;
+        border: 1px solid var(--danger);
+        color: #d99b8c;
+        background: transparent;
+        border-radius: 3px;
+        padding: 3px 7px;
+        cursor: pointer;
+      }
+      .portrait .p-remove:hover {
+        background: rgba(181, 83, 63, 0.15);
+      }
+      .portrait.glitching .frame-svg {
+        animation: aura-glitch 0.5s steps(2) 3;
+      }
+      @keyframes aura-glitch {
+        50% {
+          filter: hue-rotate(90deg) brightness(1.6);
+        }
+      }
+
+      /* Lever/dial control (floor 3) */
+      .dial-btn {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12.5px;
+        cursor: pointer;
+        border: 1px solid var(--brass-dim);
+        border-radius: 50px;
+        background: #120d08;
+        color: var(--brass);
+        padding: 8px 18px;
+      }
+      .dial-btn:hover {
+        border-color: var(--brass);
+      }
+
+      /* ── Overlays ─────────────────────────────────────────────────── */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 28px;
+        background: rgba(8, 6, 4, 0.94);
+      }
+      .title-main {
+        font-family: "Cormorant SC", serif;
+        font-weight: 700;
+        font-size: clamp(38px, 8vw, 78px);
+        color: var(--brass);
+        text-shadow: 0 0 26px rgba(176, 141, 87, 0.4);
+        line-height: 1.05;
+      }
+      .title-sub {
+        font-size: 12px;
+        letter-spacing: 0.4em;
+        color: var(--ink-dim);
+        text-transform: uppercase;
+        margin: 12px 0 26px;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .story {
+        max-width: 640px;
+        font-size: 15.5px;
+        line-height: 1.8;
+        color: var(--ink);
+        margin: 0 auto 26px;
+        text-align: left;
+      }
+      .story b {
+        color: var(--candle);
+      }
+      .story .sick {
+        color: var(--recon);
+        text-shadow: 0 0 8px rgba(155, 127, 196, 0.4);
+      }
+      .small-warning {
+        margin-top: 22px;
+        font-size: 10.5px;
+        color: var(--ink-dim);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      .lvl-title {
+        font-family: "Cormorant SC", serif;
+        font-size: clamp(26px, 5vw, 44px);
+        color: var(--candle);
+        text-shadow: 0 0 20px rgba(234, 184, 104, 0.35);
+      }
+      .lvl-brief {
+        max-width: 580px;
+        color: var(--ink);
+        font-size: 15px;
+        line-height: 1.75;
+        margin: 14px auto 26px;
+        text-align: left;
+      }
+
+      /* ── Ambient effect layers ───────────────────────────────────── */
+      #dustCanvas,
+      #particles {
+        position: fixed;
+        inset: 0;
+        z-index: 8;
+        pointer-events: none;
+        width: 100%;
+        height: 100%;
+      }
+      #vig {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        pointer-events: none;
+        background: radial-gradient(ellipse at center, transparent 50%, rgba(4, 3, 2, 0.88) 100%);
+      }
+      #flicker {
+        position: fixed;
+        inset: 0;
+        z-index: 49;
+        pointer-events: none;
+        background: rgba(234, 184, 104, 0.02);
+        opacity: 0;
+      }
+      #flicker.on {
+        animation: candle-flicker 0.15s steps(2) infinite;
+      }
+      @keyframes candle-flicker {
+        0%,
+        100% {
+          opacity: 0.02;
+        }
+        50% {
+          opacity: 0.06;
+        }
+      }
+      #reconFlash {
+        position: fixed;
+        inset: 0;
+        z-index: 65;
+        pointer-events: none;
+        background: radial-gradient(ellipse at center, rgba(155, 127, 196, 0.35), transparent 65%);
+        opacity: 0;
+      }
+      #reconFlash.run {
+        animation: recon-pulse 0.8s ease-out;
+      }
+      @keyframes recon-pulse {
+        0% {
+          opacity: 0.85;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      .shake {
+        animation: shake-kf 0.4s linear;
+      }
+      @keyframes shake-kf {
+        20% {
+          transform: translate(-3px, 2px);
+        }
+        40% {
+          transform: translate(4px, -2px);
+        }
+        60% {
+          transform: translate(-4px, 1px);
+        }
+        80% {
+          transform: translate(3px, -1px);
+        }
+      }
+      .glitching {
+        animation: page-glitch 0.14s steps(2) 3;
+      }
+      @keyframes page-glitch {
+        50% {
+          filter: hue-rotate(-60deg) contrast(1.3) saturate(1.4);
+          transform: translateX(-3px);
+        }
+      }
+
+      .term-scroll::-webkit-scrollbar {
+        width: 8px;
+      }
+      .term-scroll::-webkit-scrollbar-thumb {
+        background: #2a1e12;
+        border-radius: 4px;
+      }
+
+      @media (max-width: 880px) {
+        #stage {
+          flex-direction: column;
+          overflow-y: auto;
+        }
+        #treePanel {
+          min-height: 280px;
+        }
+        #whisperPanel {
+          height: 110px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .glitching,
+        .shake,
+        .room-frame.buggy,
+        #flicker.on,
+        #reconFlash.run,
+        .portrait.glitching .frame-svg {
+          animation: none !important;
+        }
+      }
+      :focus-visible {
+        outline: 2px solid var(--candle);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div style="padding: 40px; color: #cdbb98; font-family: Georgia, serif; background: #100c08">This house needs JavaScript to haunt you properly.</div>
+    </noscript>
+
+    <canvas id="dustCanvas"></canvas>
+    <canvas id="particles"></canvas>
+    <div id="flicker"></div>
+    <div id="reconFlash"></div>
+    <div id="vig"></div>
+
+    <script>
+      /* ══════════════════════════════════════════════════════════════════
+   THE RECONCILER — vanilla edition
+   Part A: a real, tiny virtual-DOM reconciler (h/createDom/patch),
+   a hand-rolled effect system, audio, ambient canvases.
+   No React. No Babel. This IS the reconciler.
+   ══════════════════════════════════════════════════════════════════ */
+      "use strict";
+
+      const REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      const $ = (sel) => document.querySelector(sel);
+      const $id = (id) => document.getElementById(id);
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+      /* ════════════════════════ MINI RECONCILER ═══════════════════════════
+   h()        — build a vnode tree, plain JS objects, no JSX.
+   createDom  — turn a vnode into a real DOM node.
+   patch      — diff old vs new vnode, update the real DOM in place.
+   Two reconciliation modes for child lists, chosen automatically:
+     • KEYED   — children carry props.key; matched and moved by identity.
+     • UNKEYED — children matched purely by position (index 0 vs index 0,
+                 index 1 vs index 1, …). This is exactly what "using the
+                 array index as a key" amounts to — the DOM node, and
+                 anything privately attached to it, gets reused by SLOT,
+                 not by the logical item's identity.
+   ══════════════════════════════════════════════════════════════════ */
+      const SVG_NS = "http://www.w3.org/2000/svg";
+
+      function h(tag, props, ...children) {
+        props = props || {};
+        const flat = children.flat(Infinity).filter((c) => c !== null && c !== undefined && c !== false);
+        const kids = flat.map((c) => (typeof c === "object" && c && c.tag !== undefined ? c : { tag: "#text", text: String(c), props: {}, children: [] }));
+        return { tag, props, children: kids, key: props.key };
+      }
+
+      function setProp(dom, k, v) {
+        if (k === "key") return;
+        if (k.startsWith("on") && typeof v === "function") {
+          dom[k] = v;
+          return;
+        }
+        if (k === "style" && v && typeof v === "object") {
+          Object.assign(dom.style, v);
+          return;
+        }
+        if (k === "className") {
+          dom.setAttribute("class", v || "");
+          return;
+        }
+        if (v === true) {
+          dom.setAttribute(k, "");
+          return;
+        }
+        if (v === false || v === null || v === undefined) {
+          dom.removeAttribute(k);
+          return;
+        }
+        dom.setAttribute(k, v);
+      }
+      function removeProp(dom, k) {
+        if (k === "key") return;
+        if (k.startsWith("on")) {
+          dom[k] = null;
+          return;
+        }
+        if (k === "className") {
+          dom.removeAttribute("class");
+          return;
+        }
+        dom.removeAttribute(k);
+      }
+      function applyProps(dom, oldProps, newProps) {
+        oldProps = oldProps || {};
+        newProps = newProps || {};
+        for (const k in oldProps) if (!(k in newProps)) removeProp(dom, k);
+        for (const k in newProps) if (oldProps[k] !== newProps[k]) setProp(dom, k, newProps[k]);
+      }
+
+      function createDom(vnode, isSvg) {
+        if (vnode.tag === "#text") {
+          const d = document.createTextNode(vnode.text);
+          vnode.dom = d;
+          return d;
+        }
+        const nowSvg = isSvg || vnode.tag === "svg";
+        const dom = nowSvg ? document.createElementNS(SVG_NS, vnode.tag) : document.createElement(vnode.tag);
+        applyProps(dom, {}, vnode.props);
+        vnode.children.forEach((child) => dom.appendChild(createDom(child, nowSvg)));
+        vnode.dom = dom;
+        return dom;
+      }
+
+      function patch(parentDom, newVNode, oldVNode, isSvg) {
+        if (!oldVNode) {
+          const dom = createDom(newVNode, isSvg);
+          parentDom.appendChild(dom);
+          return newVNode;
+        }
+        if (!newVNode) {
+          if (oldVNode.dom && oldVNode.dom.parentNode === parentDom) parentDom.removeChild(oldVNode.dom);
+          return null;
+        }
+        if (newVNode.tag !== oldVNode.tag) {
+          // Different type at the same slot — a full replace, not a patch.
+          const dom = createDom(newVNode, isSvg);
+          if (oldVNode.dom && oldVNode.dom.parentNode === parentDom) parentDom.replaceChild(dom, oldVNode.dom);
+          else parentDom.appendChild(dom);
+          return newVNode;
+        }
+        const dom = oldVNode.dom;
+        newVNode.dom = dom; // same type → reuse the real node (this IS the "patch" case)
+        if (newVNode.tag === "#text") {
+          if (newVNode.text !== oldVNode.text) dom.nodeValue = newVNode.text;
+          return newVNode;
+        }
+        const nowSvg = isSvg || newVNode.tag === "svg";
+        applyProps(dom, oldVNode.props, newVNode.props);
+        patchChildren(dom, newVNode.children, oldVNode.children, nowSvg);
+        return newVNode;
+      }
+
+      function patchChildren(parentDom, newChildren, oldChildren, isSvg) {
+        const hasKeys = newChildren.some((c) => c.key != null) || oldChildren.some((c) => c.key != null);
+        if (!hasKeys) {
+          // UNKEYED: match purely by position.
+          const max = Math.max(newChildren.length, oldChildren.length);
+          for (let i = 0; i < max; i++) patch(parentDom, newChildren[i] || null, oldChildren[i] || null, isSvg);
+          return;
+        }
+        // KEYED: match by identity, then fix up DOM order.
+        const oldByKey = new Map();
+        oldChildren.forEach((c) => oldByKey.set(c.key != null ? c.key : c, c));
+        const used = new Set();
+        let lastDom = null;
+        newChildren.forEach((newC) => {
+          const match = newC.key != null ? oldByKey.get(newC.key) : undefined;
+          const patched = patch(parentDom, newC, match || null, isSvg);
+          if (match) used.add(match);
+          const dom = patched.dom;
+          const wantNext = lastDom ? lastDom.nextSibling : parentDom.firstChild;
+          if (wantNext !== dom) parentDom.insertBefore(dom, wantNext);
+          lastDom = dom;
+        });
+        oldChildren.forEach((oldC) => {
+          if (!used.has(oldC) && oldC.dom && oldC.dom.parentNode === parentDom) parentDom.removeChild(oldC.dom);
+        });
+      }
+
+      /* A tiny helper for Floor 4: private per-instance data that lives on the
+   real DOM node, exactly the way hook state lives on a fiber. Reused
+   (not reset) when a node is reused; freshly initialized when it isn't. */
+      function instanceData(dom, initFn) {
+        if (dom.__data === undefined) dom.__data = initFn();
+        return dom.__data;
+      }
+
+      /* ════════════════════════ EFFECT SYSTEM ══════════════════════════════
+   A minimal, honest useEffect-alike — with real post-commit timing.
+   Floor builders QUEUE effect descriptors while building the tree;
+   nothing runs yet. After renderApp() finishes patching the DOM, the
+   queue is flushed. This matters: an effect firing DURING tree
+   construction can trigger a state update whose render then gets
+   clobbered when the outer (still in-progress) render finally
+   finishes building and patches over it with stale captured values.
+   Flushing strictly after commit — never nested inside it — avoids
+   that whole class of bugs, the same way React's real effect timing
+   does.
+   ══════════════════════════════════════════════════════════════════ */
+      const _effects = {};
+      let _pendingEffects = [];
+      function runEffect(key, deps, fn) {
+        _pendingEffects.push({ key, deps, fn });
+      }
+      function flushEffects() {
+        const batch = _pendingEffects;
+        _pendingEffects = [];
+        batch.forEach(({ key, deps, fn }) => {
+          const prev = _effects[key];
+          const changed = !prev || deps === undefined || !prev.deps || deps.length !== prev.deps.length || deps.some((d, i) => d !== prev.deps[i]);
+          if (changed) {
+            if (prev && typeof prev.cleanup === "function") prev.cleanup();
+            const cleanup = fn();
+            _effects[key] = { deps, cleanup };
+          }
+        });
+      }
+      function clearEffect(key) {
+        const prev = _effects[key];
+        if (prev && typeof prev.cleanup === "function") prev.cleanup();
+        delete _effects[key];
+      }
+
+      /* ── AUDIO — synthetic Web Audio. A manor breathing wrong. ────────── */
+      const AudioFX = (() => {
+        let ctx = null,
+          drone = null;
+        const ac = () => {
+          if (!ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            ctx = new AC();
+          }
+          if (ctx.state === "suspended") ctx.resume();
+          return ctx;
+        };
+        const env = (g, t0, a, peak, d) => {
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(peak, t0 + a);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d);
+        };
+        const osc = (type, f0, f1, dur, peak) => {
+          const c = ac();
+          if (!c) return;
+          const o = c.createOscillator(),
+            g = c.createGain();
+          o.type = type;
+          o.frequency.setValueAtTime(f0, c.currentTime);
+          if (f1) o.frequency.exponentialRampToValueAtTime(f1, c.currentTime + dur);
+          env(g, c.currentTime, 0.008, peak || 0.11, dur);
+          o.connect(g);
+          g.connect(c.destination);
+          o.start();
+          o.stop(c.currentTime + dur + 0.05);
+        };
+        const noiseBurst = (dur, peak, freq) => {
+          const c = ac();
+          if (!c) return;
+          const b = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate);
+          const d = b.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          const s = c.createBufferSource();
+          s.buffer = b;
+          const f = c.createBiquadFilter();
+          f.type = "bandpass";
+          f.frequency.value = freq || 700;
+          const g = c.createGain();
+          env(g, c.currentTime, 0.01, peak || 0.15, dur);
+          s.connect(f);
+          f.connect(g);
+          g.connect(c.destination);
+          s.start();
+        };
+        return {
+          unlock() {
+            ac();
+          },
+          startDrone() {
+            const c = ac();
+            if (!c || drone) return;
+            const o1 = c.createOscillator();
+            o1.type = "sine";
+            o1.frequency.value = 55;
+            const o2 = c.createOscillator();
+            o2.type = "sine";
+            o2.frequency.value = 55.6;
+            const lfo = c.createOscillator();
+            lfo.type = "sine";
+            lfo.frequency.value = 0.09;
+            const lfoGain = c.createGain();
+            lfoGain.gain.value = 0.02;
+            const g = c.createGain();
+            g.gain.value = 0.045;
+            lfo.connect(lfoGain);
+            lfoGain.connect(g.gain);
+            o1.connect(g);
+            o2.connect(g);
+            g.connect(c.destination);
+            o1.start();
+            o2.start();
+            lfo.start();
+            drone = { o1, o2, lfo, g };
+          },
+          setDroneSickness(amount) {
+            if (!drone) return;
+            drone.o2.frequency.setTargetAtTime(55.6 + amount * 14, ctx.currentTime, 0.6);
+            drone.g.gain.setTargetAtTime(0.045 + amount * 0.05, ctx.currentTime, 0.6);
+          },
+          stopDrone() {
+            if (!drone) return;
+            try {
+              drone.g.gain.value = 0;
+              drone.o1.stop();
+              drone.o2.stop();
+              drone.lfo.stop();
+            } catch (e) {}
+            drone = null;
+          },
+          creak() {
+            osc("sawtooth", 90, 60, 0.45, 0.07);
+          },
+          chime() {
+            osc("sine", 660, 990, 0.4, 0.08);
+          },
+          error() {
+            osc("sawtooth", 260, 90, 0.35, 0.12);
+            noiseBurst(0.3, 0.1, 500);
+          },
+          fix() {
+            osc("sine", 440, 660, 0.3, 0.09);
+            setTimeout(() => osc("sine", 660, 880, 0.25, 0.07), 140);
+          },
+          reconStinger() {
+            osc("sawtooth", 200, 700, 0.5, 0.14);
+            noiseBurst(0.5, 0.12, 1300);
+          },
+          chord() {
+            [261.6, 329.6, 392.0, 523.3].forEach((f, i) => setTimeout(() => osc("sine", f, null, 0.5, 0.08), i * 130));
+          }
+        };
+      })();
+
+      /* ── DUST MOTES — ambient candlelit atmosphere ────────────────────── */
+      (() => {
+        const cv = $id("dustCanvas");
+        const cx = cv.getContext && cv.getContext("2d");
+        if (!cx) return;
+        let motes = [];
+        const size = () => {
+          cv.width = innerWidth;
+          cv.height = innerHeight;
+        };
+        addEventListener("resize", size);
+        size();
+        const N = REDUCED ? 0 : 46;
+        for (let i = 0; i < N; i++) {
+          motes.push({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: 0.6 + Math.random() * 1.8, vy: -(0.06 + Math.random() * 0.15), vx: (Math.random() - 0.5) * 0.06, a: 0.05 + Math.random() * 0.18, phase: Math.random() * 6.28 });
+        }
+        const frame = (t) => {
+          cx.clearRect(0, 0, cv.width, cv.height);
+          for (const m of motes) {
+            m.y += m.vy;
+            m.x += m.vx + Math.sin(t / 3000 + m.phase) * 0.04;
+            if (m.y < -5) m.y = innerHeight + 5;
+            if (m.x < -5) m.x = innerWidth + 5;
+            if (m.x > innerWidth + 5) m.x = -5;
+            cx.beginPath();
+            cx.fillStyle = "rgba(234,184,104," + m.a + ")";
+            cx.arc(m.x, m.y, m.r, 0, 6.28);
+            cx.fill();
+          }
+          requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      })();
+
+      /* ── DIFF SPARKS — canvas overlay on the fiber tree ───────────────── */
+      const DiffSparks = (() => {
+        let cv = null,
+          cx = null,
+          parts = [],
+          running = false;
+        const bind = () => {
+          cv = $id("diffCanvas");
+          if (!cv) return false;
+          cx = cv.getContext("2d");
+          const rect = cv.parentElement.getBoundingClientRect();
+          cv.width = rect.width;
+          cv.height = rect.height;
+          return true;
+        };
+        const frame = () => {
+          if (!cx) {
+            running = false;
+            return;
+          }
+          cx.clearRect(0, 0, cv.width, cv.height);
+          parts = parts.filter((p) => p.life > 0);
+          for (const p of parts) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.03;
+            p.life--;
+            cx.globalAlpha = Math.max(0, p.life / p.maxLife);
+            cx.fillStyle = p.color;
+            cx.beginPath();
+            cx.arc(p.x, p.y, p.r, 0, 6.28);
+            cx.fill();
+          }
+          cx.globalAlpha = 1;
+          if (parts.length) requestAnimationFrame(frame);
+          else running = false;
+        };
+        return {
+          burst(x, y, color, n) {
+            if (REDUCED) return;
+            if (!cx && !bind()) return;
+            for (let i = 0; i < (n || 18); i++) {
+              const ang = Math.random() * 6.28,
+                spd = 0.6 + Math.random() * 2.2;
+              parts.push({ x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, r: 1 + Math.random() * 2, life: 40 + Math.random() * 20, maxLife: 60, color });
+            }
+            if (!running) {
+              running = true;
+              frame();
+            }
+          },
+          resize() {
+            if (cv) bind();
+          }
+        };
+      })();
+      addEventListener("resize", () => DiffSparks.resize());
+
+      /* ── VICTORY MOTES — warm brass/candlelight burst, full screen ────── */
+      const Victory = (() => {
+        const cv = $id("particles");
+        const cx = cv.getContext && cv.getContext("2d");
+        let parts = [],
+          running = false;
+        const size = () => {
+          cv.width = innerWidth;
+          cv.height = innerHeight;
+        };
+        addEventListener("resize", size);
+        size();
+        const frame = () => {
+          if (!cx) return;
+          if (!parts.length) {
+            running = false;
+            cx.clearRect(0, 0, cv.width, cv.height);
+            return;
+          }
+          cx.clearRect(0, 0, cv.width, cv.height);
+          parts = parts.filter((p) => p.life > 0);
+          for (const p of parts) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy -= 0.015;
+            p.life--;
+            cx.globalAlpha = Math.min(1, p.life / 50);
+            cx.fillStyle = p.color;
+            cx.beginPath();
+            cx.arc(p.x, p.y, p.s, 0, 6.28);
+            cx.fill();
+          }
+          cx.globalAlpha = 1;
+          requestAnimationFrame(frame);
+        };
+        return {
+          burst() {
+            if (!cx || REDUCED) return;
+            const colors = ["#eab868", "#b08d57", "#e3d3b4", "#9b7fc4"];
+            for (let i = 0; i < 130; i++) {
+              parts.push({ x: innerWidth / 2 + (Math.random() - 0.5) * 200, y: innerHeight * 0.7, vx: (Math.random() - 0.5) * 3.4, vy: -(2 + Math.random() * 5), s: 1.5 + Math.random() * 3, life: 100 + Math.random() * 60, color: colors[i % colors.length] });
+            }
+            if (!running) {
+              running = true;
+              frame();
+            }
+          }
+        };
+      })();
+    </script>
+
+    <script>
+      /* ══════════════════════════════════════════════════════════════════
+   Part B: fiber tree, HUD, whisper log, shared glyphs, game state.
+   All built with h() — the same reconciler renders every pixel here.
+   ══════════════════════════════════════════════════════════════════ */
+      "use strict";
+
+      /* ── FIBER TREE — a small honest tree, grown as floors resolve ────── */
+      function layoutTree(nodes) {
+        const byParent = {};
+        nodes.forEach((n) => {
+          (byParent[n.parentId || "__root"] = byParent[n.parentId || "__root"] || []).push(n);
+        });
+        const positioned = {};
+        const W = 100,
+          depthGap = 15.5;
+        const place = (parentKey, depth, x0, x1) => {
+          const kids = byParent[parentKey] || [];
+          const step = (x1 - x0) / Math.max(1, kids.length);
+          kids.forEach((n, i) => {
+            const cx = x0 + step * (i + 0.5);
+            positioned[n.id] = { x: cx, y: 8 + depth * depthGap, node: n };
+            place(n.id, depth + 1, cx - step / 2, cx + step / 2);
+          });
+        };
+        place("__root", 0, 0, W);
+        return positioned;
+      }
+      function depthMid(a, b) {
+        return Math.max(3, (b.y - a.y) / 2);
+      }
+      const STATUS_COLOR = { resolved: "#6e5738", active: "#eab868", buggy: "#b5533f", gone: "#3a2e22" };
+
+      function FiberTree(nodes) {
+        const pos = layoutTree(nodes);
+        const edges = nodes
+          .filter((n) => n.parentId && pos[n.id] && pos[n.parentId])
+          .map((n) => {
+            const a = pos[n.parentId],
+              b = pos[n.id];
+            const cls = "fedge" + (n.status === "active" || n.status === "buggy" ? " active" : "");
+            const d = "M " + a.x + " " + (a.y + 2) + " C " + a.x + " " + (a.y + depthMid(a, b)) + ", " + b.x + " " + (b.y - depthMid(a, b)) + ", " + b.x + " " + (b.y - 1);
+            return h("path", { class: cls, d, key: "e" + n.id });
+          });
+        const groups = nodes
+          .map((n) => {
+            const p = pos[n.id];
+            if (!p) return null;
+            const c = STATUS_COLOR[n.status] || "#6e5738";
+            const pulsing = n.status === "active";
+            const r = n.status === "gone" ? 1.4 : 2.3;
+            const ring = pulsing ? h("circle", { class: "fnode-ring", r: "3.6", stroke: c, opacity: "0.55" }, h("animate", { attributeName: "r", values: "3;5.2;3", dur: "1.8s", repeatCount: "indefinite" }), h("animate", { attributeName: "opacity", values: "0.6;0;0.6", dur: "1.8s", repeatCount: "indefinite" })) : null;
+            return h("g", { key: n.id, id: "fnode-" + n.id, class: "fnode-shell", transform: "translate(" + p.x + "," + p.y + ")" }, ring, h("circle", { class: "fnode-dot", r, fill: c }), h("text", { class: "fnode-label", x: "0", y: p.y > 60 ? -4.5 : 6.5, "text-anchor": "middle" }, n.label));
+          })
+          .filter(Boolean);
+        return h("svg", { id: "treeSvg", viewBox: "0 0 100 100", preserveAspectRatio: "xMidYMin meet" }, ...edges, ...groups);
+      }
+
+      /* ── HUD ───────────────────────────────────────────────────────────── */
+      function HUD(st) {
+        const pct = Math.max(0, st.coherence);
+        const color = pct > 60 ? "#b08d57" : pct > 30 ? "#c99a4a" : "#9b7fc4";
+        return h("header", { id: "hud" }, h("span", { class: "hud-label" }, "Coherence"), h("div", { id: "coherenceWrap" }, h("div", { id: "coherenceBar" }, h("div", { id: "coherenceFill", style: { width: pct + "%", background: color, boxShadow: "0 0 10px " + color } })), h("span", { id: "coherenceNum", class: "mono", style: { color } }, pct + "%")), h("span", { class: "hud-chip" }, "ATTEMPT #" + st.attempt), st.screen === "play" ? h("span", { id: "floorChip", class: "mono" }, FLOOR_META[st.floor].chip) : null);
+      }
+
+      /* ── WHISPER LOG ──────────────────────────────────────────────────── */
+      function WhisperLog(lines) {
+        return h("footer", { id: "whisperPanel" }, h("div", { id: "whisperBar" }, "▸ the house whispers"), h("div", { id: "whisperOut", class: "term-scroll" }, ...lines.map((l, i) => h("div", { key: i, class: "w-" + l.type }, l.text))));
+      }
+      function scrollWhisperToEnd() {
+        const el = $id("whisperOut");
+        if (el) el.scrollTop = el.scrollHeight;
+      }
+
+      /* Small portrait-frame SVG glyph, tinted by an aura hue (per-instance identity). */
+      function PortraitFrame(hue, glitch) {
+        return h("svg", { class: "frame-svg", width: "76", height: "86", viewBox: "0 0 76 86" }, h("rect", { x: "3", y: "3", width: "70", height: "80", rx: "3", fill: "#1c150e", stroke: "#6e5738", "stroke-width": "2" }), h("rect", { x: "9", y: "9", width: "58", height: "68", rx: "2", fill: "#100c08" }), h("circle", { cx: "38", cy: "34", r: "13", fill: "hsl(" + hue + ",28%,32%)", opacity: glitch ? "0.55" : "0.85" }), h("path", { d: "M 20 66 Q 38 50 56 66 L 56 74 L 20 74 Z", fill: "hsl(" + hue + ",22%,22%)" }), h("circle", { cx: "38", cy: "34", r: "15.5", fill: "none", stroke: "hsl(" + hue + ",70%,60%)", "stroke-width": "1.4", opacity: "0.65" }, h("animate", { attributeName: "r", values: "14;16.5;14", dur: (glitch ? 0.5 : 2.6) + "s", repeatCount: "indefinite" })));
+      }
+
+      /* ══════════════════════════════════════════════════════════════════
+   GAME STATE
+   ══════════════════════════════════════════════════════════════════ */
+      const FLOOR_META = [{ chip: "FLOOR 1 · THE DRILLING SHAFT" }, { chip: "FLOOR 2 · THE REBUILDING ROOM" }, { chip: "FLOOR 3 · THE STALE WING" }, { chip: "FLOOR 4 · THE RECONCILER" }];
+
+      function freshSub(idx) {
+        return [{ door: 0 }, { bugSeen: false, wired: false, litCount: 0, crashMessage: null }, { ghostDeps: null, ghostFixed: false, heartFixed: false, roomNumber: 1, heard: null, heartBeat: 0, noneWarned: false, advancing: false }, { keyMode: "index", removed: false, verified: false, presentIds: PORTRAITS.map((p) => p.id) }][idx];
+      }
+      function freshState() {
+        return {
+          screen: "title",
+          floor: 0,
+          attempt: 1,
+          coherence: 100,
+          shaking: false,
+          f1: freshSub(0),
+          f2: freshSub(1),
+          f3: freshSub(2),
+          f4: freshSub(3)
+        };
+      }
+
+      function buildTree(st) {
+        const nodes = [{ id: "app", parentId: null, label: "root", status: st.floor === 0 ? "active" : "resolved" }];
+        const f1Labels = ["Hall", "Parlor", "Study", "Cellar"];
+        const f1Count = st.floor === 0 ? Math.min(st.f1.door + 1, 4) : 4;
+        for (let i = 0; i < f1Count; i++) {
+          const isLast = i === f1Count - 1;
+          const status = st.floor === 0 ? (isLast ? "active" : "resolved") : "resolved";
+          nodes.push({ id: "f1n" + (i + 1), parentId: i === 0 ? "app" : "f1n" + i, label: f1Labels[i], status });
+        }
+        if (st.floor >= 1) {
+          nodes.push({ id: "f2room", parentId: "f1n4", label: "Drawing Room", status: st.floor === 1 ? "active" : "resolved" });
+          let candleStatus = "resolved";
+          if (st.floor === 1) candleStatus = st.f2.wired ? "active" : "buggy";
+          nodes.push({ id: "f2candle", parentId: "f2room", label: "Candle", status: candleStatus });
+        }
+        if (st.floor >= 2) {
+          nodes.push({ id: "f3wing", parentId: "f2candle", label: "Stale Wing", status: st.floor === 2 ? "active" : "resolved" });
+          nodes.push({ id: "f3ghost", parentId: "f3wing", label: "Ghost", status: st.floor === 2 ? (st.f3.ghostFixed ? "resolved" : "active") : "resolved" });
+          nodes.push({ id: "f3heart", parentId: "f3wing", label: "Heart", status: st.floor === 2 ? (st.f3.heartFixed ? "gone" : "buggy") : "gone" });
+        }
+        if (st.floor >= 3) nodes.push({ id: "f4hall", parentId: "f3wing", label: "Portrait Hall", status: st.f4.verified ? "resolved" : "active" });
+        return nodes;
+      }
+
+      /* Bounded safety net for Floor 3's intentionally-uncleaned interval. */
+      let _activeHeartIntervals = [];
+      function _trackHeartInterval(id) {
+        _activeHeartIntervals.push(id);
+      }
+      function _clearAllHeartIntervals() {
+        _activeHeartIntervals.forEach(clearInterval);
+        _activeHeartIntervals = [];
+      }
+    </script>
+
+    <script>
+      /* ══════════════════════════════════════════════════════════════════
+   Part C: the four floors. Each builder is (st, api) -> vnode.
+   api: log(type,text) · damage(n,reason) · fix() · setSub(key,fn)
+        advance() · spark(nodeId,color,n)
+   ══════════════════════════════════════════════════════════════════ */
+      "use strict";
+
+      /* ══════════════════ FLOOR 1 · THE DRILLING SHAFT (props) ═══════════ */
+      const F1_ROOMS = ["Foyer", "Hall", "Parlor", "Study", "Cellar"];
+      function buildFloorOne(st, api) {
+        const door = st.f1.door;
+        const atRoom = F1_ROOMS[door];
+        const nextRoom = F1_ROOMS[door + 1];
+        const done = door >= 4;
+
+        const handDown = () => {
+          api.spark("f1n" + (door + 1), "#eab868", 16);
+          api.fix();
+          api.log("ok", "The lantern passes from " + atRoom + " into " + nextRoom + " — carried, not reached for.");
+          api.setSub("f1", (s) => ({ ...s, door: s.door + 1 }));
+          if (door + 1 >= 4) setTimeout(() => api.advance(), 900);
+        };
+        const reachUp = () => {
+          api.spark("f1n" + door, "#9b7fc4", 20);
+          api.damage(15, "The " + nextRoom + " reached up into the " + atRoom + " for the lantern. Its hand closed on nothing — a child cannot pull data out of a parent. It only ever arrives as a prop, carried down on purpose.");
+        };
+
+        return h("div", null, h("p", { class: "brief" }, "You stand in the ", h("b", null, atRoom), ", lantern in hand. Beyond the door: the ", h("b", null, nextRoom), ", dark until the light is ", h("i", null, "given"), " to it. ", h("span", { class: "sick" }, "The house tests you"), " — it always offers the shortcut of reaching straight through the wall."), h("div", { class: "room-frame" }, h("div", { class: "door-row" }, h("div", { class: "door" + (done ? " open" : "") }, h("span", { class: "glyph" }, "🏮"), h("div", { class: "door-name" }, atRoom), h("div", { class: "door-rule" }, "holds the lantern now")), h("div", { class: "door" }, h("span", { class: "glyph" }, done ? "🚪" : "🔒"), h("div", { class: "door-name" }, done ? "The way out" : nextRoom), h("div", { class: "door-rule" }, done ? "unlocked — the light reached every room" : "waiting to be handed the light"))), !done ? h("div", null, h("button", { class: "act-btn correct-hint", onclick: handDown }, "Hand the lantern down as a prop →"), h("button", { class: "act-btn wrong", onclick: reachUp }, "Let " + nextRoom + " reach up and take it")) : h("p", { class: "brief", style: { marginTop: "10px" } }, "Four doors, four handoffs. The light only ever moved one direction: down.")));
+      }
+
+      /* ══════════════ FLOOR 2 · THE REBUILDING ROOM (state/render) ═══════
+   THE BUG, made real: a function that calls itself, unconditionally,
+   exactly the way an unguarded state update during render calls render
+   again. This recursion is fully isolated — it touches no app state —
+   so it can't corrupt anything on its way down. It ends the same way
+   a real one does: the ENGINE's own call-stack limit throws, for real. */
+      function simulateRunawayRender(n) {
+        return simulateRunawayRender(n + 1);
+      }
+
+      function buildFloorTwo(st, api) {
+        runEffect("f2crash-" + st.attempt, [], () => {
+          if (st.f2.wired || st.f2.bugSeen) return;
+          try {
+            simulateRunawayRender(0);
+          } catch (err) {
+            // Effects now flush strictly after the render that queued them has
+            // fully committed, so it's safe to update state directly here —
+            // no manual deferral needed.
+            api.log("err", "The candle rebuilt itself into nothing. The engine itself finally refused: “" + err.message + "” — its own limit on how many times one function may call itself.");
+            api.spark("f2candle", "#9b7fc4", 24);
+            api.setSub("f2", (s) => ({ ...s, bugSeen: true, crashMessage: err.message }));
+            api.damage(18, "A real stack overflow, caught. Nothing crashed permanently — but the room paid for it.");
+          }
+        });
+
+        const rewire = () => {
+          api.fix();
+          api.spark("f2candle", "#eab868", 18);
+          api.log("ok", "You move the update out of the render path and into the click itself. The wax stops spiraling.");
+          api.setSub("f2", (s) => ({ ...s, wired: true }));
+        };
+        const light = () => {
+          const next = st.f2.litCount + 1;
+          api.spark("f2candle", "#eab868", 10);
+          AudioFX.chime();
+          api.setSub("f2", (s) => ({ ...s, litCount: next }));
+          if (next >= 3) {
+            api.log("ok", "The drawing room holds its shape at last.");
+            setTimeout(() => api.advance(), 900);
+          }
+        };
+
+        const candleBox = !st.f2.wired ? (st.f2.bugSeen ? h("div", { class: "mono", style: { fontSize: "12.5px", color: "#e2a396" } }, "🕯 the candle collapsed — ", h("i", null, st.f2.crashMessage || "a recursive failure"), ". the wax is still warm.") : h("div", { class: "mono", style: { fontSize: "12px", color: "#e2a396" } }, "rebuilding…")) : h("div", null, h("div", { class: "mono", style: { fontSize: "13px", color: "#b7dba3", marginBottom: "6px" } }, "flame steady · lit " + st.f2.litCount + "×"), h("button", { class: "act-btn correct-hint", onclick: light, disabled: st.f2.litCount >= 3 }, st.f2.litCount >= 3 ? "Fully lit" : "Light the candle"));
+
+        return h("div", null, h("p", { class: "brief" }, "A drawing room that ", h("b", null, "redraws itself"), " the instant anything touches it. Somewhere in here, a candle ", "is scheduling an update ", h("b", null, "during its own render"), ", unconditionally — so every render demands another render. ", h("span", { class: "sick" }, "The house doesn't loop forever on its own; something always finds the edge of what's allowed.")), h("div", { class: "room-frame" + (!st.f2.wired && !st.f2.bugSeen ? " buggy" : st.f2.wired ? " fixed" : "") }, candleBox, st.f2.bugSeen && !st.f2.wired ? h("div", { style: { marginTop: "10px" } }, h("button", { class: "act-btn correct-hint", onclick: rewire }, "Rewire the candle: move the update into a click handler")) : null));
+      }
+
+      /* ══════════════ FLOOR 3 · THE STALE WING (effects) ══════════════════
+   A real effect runner. Three real dependency behaviors. One real,
+   genuinely leaked setInterval, fixed by actually clearing it. */
+      function buildFloorThree(st, api) {
+        const { ghostDeps, ghostFixed, heartFixed, roomNumber } = st.f3;
+        const heard = st.f3.heard;
+
+        const depsArray = ghostDeps === "empty" ? [] : ghostDeps === "correct" ? [roomNumber] : undefined;
+        if (ghostDeps) {
+          runEffect("ghost-" + st.attempt, depsArray, () => {
+            // Real React bails out of re-rendering when a state update's value is
+            // unchanged (Object.is). Our own setSub has no such guard, so we do
+            // it explicitly here — otherwise "no array" (which re-runs every
+            // render) would call setSub with an unchanged value forever, a real
+            // infinite loop that isn't the lesson this floor is trying to teach.
+            if (st.f3.heard !== roomNumber) api.setSub("f3", (s) => ({ ...s, heard: roomNumber }));
+          });
+        }
+
+        runEffect("heart-" + st.attempt, [], () => {
+          const id = setInterval(() => {
+            api.setSub("f3", (s) => ({ ...s, heartBeat: (s.heartBeat || 0) + 1 }));
+          }, 1200);
+          _heartIntervalId = id;
+          _trackHeartInterval(id);
+          // BUG: no `return () => clearInterval(id)` here — the interval leaks.
+        });
+
+        const pickDeps = (mode) => {
+          api.setSub("f3", (s) => ({ ...s, ghostDeps: mode }));
+          api.log("dim", "the ghost is asked to listen again, with deps = " + (mode === "empty" ? "[]" : mode === "correct" ? "[roomNumber]" : "(none)"));
+          if (mode === "none" && !st.f3.noneWarned) {
+            api.setSub("f3", (s) => ({ ...s, noneWarned: true }));
+            api.damage(3, "No dependency array means this effect runs after every single render — technically current, but exhaustingly eager.");
+          }
+        };
+        const turnDial = () => {
+          api.setSub("f3", (s) => ({ ...s, roomNumber: s.roomNumber + 1 }));
+          AudioFX.creak();
+        };
+        const verify = () => {
+          if (ghostDeps === "correct" && heard === roomNumber) {
+            api.fix();
+            api.spark("f3ghost", "#eab868", 16);
+            api.log("ok", "The ghost's number matches the dial. [roomNumber] as a dependency means it re-subscribes exactly when it should.");
+            api.setSub("f3", (s) => ({ ...s, ghostFixed: true }));
+          } else {
+            api.spark("f3ghost", "#9b7fc4", 12);
+            api.damage(10, ghostDeps === "empty" ? "Empty deps meant this effect ran once, at mount, and never again. It just answered with a number that stopped being true the moment the dial turned." : "The ghost hasn't been asked with the correct dependency yet.");
+          }
+        };
+        const attachCleanup = () => {
+          if (_heartIntervalId != null) {
+            clearInterval(_heartIntervalId);
+            _heartIntervalId = null;
+          }
+          api.fix();
+          api.spark("f3heart", "#eab868", 14);
+          api.log("ok", "return () => clearInterval(id) — the beat finally stops. The room is allowed to be gone.");
+          api.setSub("f3", (s) => ({ ...s, heartFixed: true }));
+        };
+
+        if (ghostFixed && heartFixed && !st.f3.advancing) {
+          api.setSub("f3", (s) => ({ ...s, advancing: true }));
+          api.log("ok", "Both hauntings quiet. The wing exhales.");
+          setTimeout(() => api.advance(), 900);
+        }
+
+        return h("div", null, h("p", { class: "brief" }, "Two hauntings share this wing. ", h("span", { class: "sick" }, "Both are effects that never let go.")), h("div", { class: "room-frame" + (ghostFixed ? " fixed" : "") }, h("div", { class: "mono", style: { fontSize: "11px", color: "#7a6b52", marginBottom: "6px" } }, "actual room number (don't tell the ghost): " + roomNumber), h("div", { class: "mono", style: { fontSize: "13.5px", color: "#cdbb98" } }, "the ghost insists the room is number ", h("b", { style: { color: "#eab868" } }, heard == null ? "…" : String(heard))), h("div", { class: "chip-row" }, ...["empty", "correct", "none"].map((mode) => h("button", { key: mode, class: "opt-chip" + (ghostDeps === mode ? " picked" : ""), onclick: () => pickDeps(mode) }, "useEffect(fn, " + (mode === "empty" ? "[]" : mode === "correct" ? "[roomNumber]" : "— no array —") + ")"))), h("button", { class: "dial-btn", onclick: turnDial }, "↻ turn the dial (room number changes)"), " ", h("button", { class: "act-btn correct-hint", disabled: !ghostDeps || ghostFixed, onclick: verify }, ghostFixed ? "Verified ✓" : "Check the ghost's answer against the dial")), h("div", { class: "room-frame" + (heartFixed ? " fixed" : ""), id: "f3heartRoom" }, h("div", { style: { opacity: heartFixed ? 0.4 : 1 } }, h("div", { class: "mono", style: { fontSize: "13.5px" } }, heartFixed ? "silent." : "♥ still beating — pulse #" + (st.f3.heartBeat || 0))), !heartFixed ? h("button", { class: "act-btn correct-hint", onclick: attachCleanup }, "Attach cleanup: return () =>  clearInterval(id)") : null));
+      }
+      let _heartIntervalId = null;
+
+      /* ══════════════ FLOOR 4 · THE RECONCILER (keys) ═════════════════════
+   No simulation here: this floor runs THROUGH the real patch()/
+   patchChildren() from Part A. key={idx} and key={portrait.id} are
+   handed to the SAME keyed-reconciliation code path — exactly like
+   real React — so the bug and the fix are both genuinely reconciled. */
+      const PORTRAITS = [
+        { id: "ashworth", name: "Lord Ashworth", hue: 20 },
+        { id: "moira", name: "Lady Moira", hue: 265 },
+        { id: "quill", name: "Quillon the Steward", hue: 95 },
+        { id: "vex", name: "Aunt Vexingly Rosalind", hue: 340 },
+        { id: "ott", name: "Ottoline", hue: 185 }
+      ];
+      let _phaseByLogicalId = {};
+
+      function commitAndDetectGlitch(presentIds) {
+        const row = $id("f4hallRow");
+        if (!row) return [];
+        const doms = [...row.children];
+        const mismatched = [];
+        presentIds.forEach((id, idx) => {
+          const dom = doms[idx];
+          if (!dom) return;
+          const phase = instanceData(dom, () => Math.random()); // real per-DOM-node state
+          const prev = _phaseByLogicalId[id];
+          if (prev !== undefined && Math.abs(prev - phase) > 1e-9) mismatched.push(id);
+          _phaseByLogicalId[id] = phase;
+        });
+        return mismatched;
+      }
+      function flashGlitch(mismatchedIds, presentIds) {
+        const row = $id("f4hallRow");
+        if (!row) return;
+        presentIds.forEach((id, idx) => {
+          if (mismatchedIds.includes(id)) {
+            const dom = row.children[idx];
+            if (dom) {
+              dom.classList.add("glitching");
+              setTimeout(() => dom.classList.remove("glitching"), 900);
+            }
+          }
+        });
+      }
+
+      function buildFloorFour(st, api) {
+        const { keyMode, verified } = st.f4;
+        const presentIds = st.f4.presentIds;
+
+        const doRemove = (id) => {
+          const nextIds = presentIds.filter((x) => x !== id);
+          api.setSub("f4", (s) => ({ ...s, presentIds: nextIds, removed: true })); // synchronous render+patch
+          const mismatched = commitAndDetectGlitch(nextIds); // DOM already reflects the removal — inspect it now
+          if (mismatched.length) {
+            flashGlitch(mismatched, nextIds);
+            api.spark("f4hall", "#9b7fc4", 26);
+            api.damage(12, "The remaining portraits kept their positions, not their identities. " + mismatched.map((mid) => (PORTRAITS.find((p) => p.id === mid) || {}).name).join(", ") + " inherited someone else's private flicker — the DOM slot remembered a face it never belonged to.");
+          } else if (keyMode === "id") {
+            api.fix();
+            api.spark("f4hall", "#eab868", 20);
+            api.log("ok", "Every remaining portrait kept exactly its own aura. A stable key told the reconciler precisely which instance was which.");
+            api.setSub("f4", (s) => ({ ...s, verified: true }));
+            setTimeout(() => api.advance(), 1100);
+          }
+        };
+
+        const switchToStableKeys = () => {
+          _phaseByLogicalId = {};
+          api.setSub("f4", (s) => ({ ...s, keyMode: "id", presentIds: PORTRAITS.map((p) => p.id), removed: false }));
+          api.log("dim", "the hallway resets. this time, key={portrait.id}.");
+          setTimeout(() => commitAndDetectGlitch(PORTRAITS.map((p) => p.id)), 0);
+        };
+
+        const portraitNodes = presentIds.map((id, idx) => {
+          const p = PORTRAITS.find((x) => x.id === id);
+          const key = keyMode === "id" ? id : idx; // THE actual reconciliation key
+          return h("div", { class: "portrait", key }, PortraitFrame(p.hue, false), h("div", { class: "p-name" }, p.name), p.id === "ashworth" ? h("button", { class: "p-remove", onclick: () => doRemove(p.id) }, "Remove") : null);
+        });
+
+        return h("div", null, h("p", { class: "brief" }, "The last hallway. ", h("span", { class: "sick" }, "Remove Lord Ashworth's portrait"), " — watch closely what happens to everyone left on the wall."), h("div", { class: "room-frame" }, h("div", { class: "hall-row", id: "f4hallRow" }, ...portraitNodes), h("div", { class: "mono", style: { fontSize: "11px", color: "#7a6b52", margin: "8px 0" } }, "keying strategy: ", h("b", { style: { color: keyMode === "id" ? "#b7dba3" : "#e2a396" } }, keyMode === "id" ? "key={portrait.id}" : "key={index}")), keyMode === "index" && !verified ? h("button", { class: "act-btn recon-btn", onclick: switchToStableKeys }, "Switch to stable keys — key={portrait.id}") : null, verified ? h("p", { class: "brief", style: { marginTop: "8px", color: "#b7dba3" } }, "The hallway holds its shape. Nothing left is wearing someone else's face.") : null));
+      }
+
+      const FLOORS = [buildFloorOne, buildFloorTwo, buildFloorThree, buildFloorFour];
+    </script>
+
+    <script>
+      /* ══════════════════════════════════════════════════════════════════
+   Part D: App — state, render loop, engine API, title/win, mount.
+   No React. `renderApp()` below IS the render loop; `patch()` from
+   Part A IS the reconciler.
+   ══════════════════════════════════════════════════════════════════ */
+      "use strict";
+
+      let appState = freshState();
+      let rootVNode = null;
+      let whisperLines = [];
+      let startTimeRef = null;
+
+      function log(type, text) {
+        whisperLines = [...whisperLines.slice(-160), { type, text }];
+      }
+
+      /* ── engine API passed to every floor builder ── */
+      const api = {
+        log,
+        fix() {
+          AudioFX.fix();
+        },
+        spark(nodeId, color, n) {
+          const g = $id("fnode-" + nodeId);
+          const cv = $id("diffCanvas");
+          if (!g || !cv) return;
+          const gb = g.getBoundingClientRect(),
+            cb = cv.getBoundingClientRect();
+          DiffSparks.burst(gb.left - cb.left + gb.width / 2, gb.top - cb.top + gb.height / 2, color, n);
+        },
+        setSub(key, updater) {
+          appState = { ...appState, [key]: updater(appState[key]) };
+          renderApp();
+        },
+        damage(n, reason) {
+          log("err", reason);
+          AudioFX.error();
+          doShake();
+          const flash = $id("reconFlash");
+          if (flash) {
+            flash.classList.remove("run");
+            void flash.offsetWidth;
+            flash.classList.add("run");
+          }
+          const coherence = Math.max(0, appState.coherence - n);
+          AudioFX.setDroneSickness(1 - coherence / 100);
+          if (coherence <= 0) {
+            _clearAllHeartIntervals();
+            log("recon", "The house forgets you were ever on this floor. Attempt #" + (appState.attempt + 1) + " begins.");
+            AudioFX.reconStinger();
+            const idx = appState.floor;
+            const fresh = freshSub(idx);
+            appState = { ...appState, coherence: 55, attempt: appState.attempt + 1, [["f1", "f2", "f3", "f4"][idx]]: fresh };
+          } else {
+            appState = { ...appState, coherence };
+          }
+          renderApp();
+        },
+        advance() {
+          AudioFX.chord();
+          const nextFloor = appState.floor + 1;
+          AudioFX.setDroneSickness(0);
+          if (nextFloor >= FLOORS.length) {
+            appState = { ...appState, screen: "won" };
+            renderApp();
+            return;
+          }
+          appState = { ...appState, floor: nextFloor, coherence: Math.min(100, appState.coherence + 15) };
+          renderApp();
+          if (nextFloor === 3) commitAndDetectGlitch(appState.f4.presentIds); // seed Floor 4 baselines
+        }
+      };
+
+      function doShake() {
+        appState = { ...appState, shaking: true };
+        renderApp();
+        setTimeout(() => {
+          appState = { ...appState, shaking: false };
+          renderApp();
+        }, 420);
+      }
+
+      function start() {
+        AudioFX.unlock();
+        AudioFX.startDrone();
+        startTimeRef = Date.now();
+        appState = { ...appState, screen: "play" };
+        log("dim", "you wake on the floor of the foyer. the front door will not open. something upstairs is still rendering.");
+        renderApp();
+      }
+      function restart() {
+        AudioFX.stopDrone();
+        _clearAllHeartIntervals();
+        startTimeRef = null;
+        appState = freshState();
+        whisperLines = [];
+        rootVNode = null;
+        $id("root").innerHTML = "";
+        renderApp();
+      }
+
+      /* ── ambient dread: flicker toggle + escalating page glitches ─────── */
+      let _lastScreen = null;
+      function ambientTick() {
+        const flicker = $id("flicker");
+        if (appState.screen === "play" && flicker) flicker.classList.add("on");
+        else if (flicker) flicker.classList.remove("on");
+      }
+      setInterval(() => {
+        if (appState.screen !== "play") return;
+        const chance = Math.min(0.1 + appState.attempt * 0.03, 0.4);
+        if (Math.random() < chance) {
+          document.body.classList.add("glitching");
+          setTimeout(() => document.body.classList.remove("glitching"), 430);
+          if (Math.random() < 0.4) AudioFX.creak();
+        }
+      }, 9000);
+
+      /* ══════════════════════════════════════════════════════════════════
+   TREE BUILD → VNODE, TITLE, WIN
+   ══════════════════════════════════════════════════════════════════ */
+      function buildAppTree(st) {
+        if (st.screen === "title") return Title();
+        if (st.screen === "won") return Win(st);
+
+        const FloorBuilder = FLOORS[st.floor];
+        const shakeCls = st.shaking ? " shake" : "";
+        return h("div", { id: "app", class: shakeCls }, HUD(st), h("main", { id: "stage" }, h("section", { id: "manor", class: "term-scroll" }, FloorBuilder(st, api)), h("section", { id: "treePanel" }, h("div", { class: "panel-label" }, "the fiber tree"), h("div", { id: "treeSvgWrap" }, FiberTree(buildTree(st)), h("canvas", { id: "diffCanvas" })))), WhisperLog(whisperLines));
+      }
+
+      function Title() {
+        return h("div", { class: "overlay" }, h("h1", { class: "title-main" }, "the reconciler"), h("div", { class: "title-sub" }, "a react-concepts horror quest — pure vanilla js"), h("div", { class: "story" }, h("p", null, "2 AM. You were debugging a haunted-house app when the deploy went wrong — and you woke up ", h("b", null, "inside"), " it."), h("p", null, "The foyer is the root. Every door is a child in the tree. Something called ", h("span", { class: "sick" }, "The Reconciler"), " lives in the walls: the process that decides what changes and what stays, every time this house re-renders. It has been running wrong for years."), h("p", null, "Duplicated furniture. Doors that forget they were ever unlocked. A drawing room that rebuilds itself faster and faster until the wax cracks. Four floors. Four real reasons a component tree goes wrong. Fix the house's reconciler — or become part of its next render.")), h("button", { class: "btn title-btn", onclick: start }, "▶ open the front door"), h("p", { class: "small-warning" }, "🎧 headphones recommended · ⚠ flashing light and one real thrown error, caught safely"));
+      }
+      function Win(st) {
+        const ms = Date.now() - (startTimeRef || Date.now());
+        const mm = Math.floor(ms / 60000),
+          ss = Math.floor((ms % 60000) / 1000);
+        return h("div", { class: "overlay" }, h("h1", { class: "title-main", style: { color: "#b7dba3", textShadow: "0 0 26px rgba(159,216,138,.4)" } }, "the house holds still"), h("div", { class: "title-sub" }, "every floor reconciled"), h("div", { class: "story" }, h("p", null, "The front door doesn't just open — it ", h("i", null, "stays"), " open. Behind you, the manor's tree settles into something almost peaceful: no phantom re-renders, no stale ghosts, no portraits wearing the wrong face."), h("p", null, "The Reconciler is still in the walls. It always will be. But you know what it's doing now, floor by floor — and a thing you understand can't haunt you the same way twice.")), h("div", { class: "story", style: { textAlign: "center" } }, "floors reconciled: ", h("b", null, "4/4"), " · attempts: ", h("b", null, String(st.attempt)), " · time inside: ", h("b", null, mm + "m " + String(ss).padStart(2, "0") + "s")), h("button", { class: "btn title-btn", onclick: restart }, "⟲ re-render from the top"));
+      }
+
+      /* ── THE RENDER LOOP ────────────────────────────────────────────────
+   Deliberately naive and synchronous: build a fresh vnode tree from
+   state, then patch it against the last one. This simplicity is
+   exactly what makes Floor 2's bug possible — and exactly what makes
+   it safe to reason about. ─────────────────────────────────────── */
+      function renderApp() {
+        const newVNode = buildAppTree(appState);
+        rootVNode = patch($id("root"), newVNode, rootVNode, false);
+        ambientTick();
+        flushEffects(); // strictly after commit — never nested inside buildAppTree
+        if (appState.screen === "won" && _lastScreen !== "won") {
+          AudioFX.stopDrone();
+          Victory.burst();
+          setTimeout(() => Victory.burst(), 800);
+        }
+        _lastScreen = appState.screen;
+      }
+
+      /* ── BOOT ─────────────────────────────────────────────────────────── */
+      renderApp();
+    </script>
+  </body>
+</html>
