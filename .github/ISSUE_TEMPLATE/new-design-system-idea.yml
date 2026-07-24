@@ -1,0 +1,108 @@
+name: New Design System Idea
+description: Propose a new design system UI showcase.
+title: "Idea: "
+labels: ["idea", "design-system"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a new design system showcase! Please fill in the details below.
+        Design system entries are premium UI showcases — dashboards, landing pages, and components built with CSS frameworks and JS libraries via CDN. Make sure your idea isn't already an existing design or open issue.
+
+  - type: input
+    id: design-name
+    attributes:
+      label: Design Name
+      description: A short, descriptive name for the design.
+      placeholder: e.g. Analytics Dashboard, Pricing Table, Chat Interface
+    validations:
+      required: true
+
+  - type: input
+    id: filename
+    attributes:
+      label: Proposed Filename
+      description: Kebab-case .html filename.
+      placeholder: e.g. analytics-dashboard.html
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Which category does this design belong to?
+      options:
+        - Components
+        - Dashboards
+        - E-Commerce
+        - Landing Pages
+        - Portfolios
+        - Social
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does this design showcase? Who is it for?
+      placeholder: Describe the design's purpose and the UI patterns it demonstrates.
+    validations:
+      required: true
+
+  - type: textarea
+    id: features
+    attributes:
+      label: Key Features
+      description: List the main features (use bullet points).
+      placeholder: |
+        - Feature 1
+        - Feature 2
+        - Feature 3
+    validations:
+      required: true
+
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Suggested Difficulty
+      description: How complex do you think this design is? (Final label assigned by maintainer, slightly negotiable.)
+      options:
+        - Easy
+        - Medium
+    validations:
+      required: true
+
+  - type: textarea
+    id: tags
+    attributes:
+      label: Tags
+      description: Comma-separated tags for filtering on the landing page.
+      placeholder: e.g. dashboard, dark-mode, responsive, tailwind
+
+  - type: textarea
+    id: frameworks
+    attributes:
+      label: CSS Frameworks / JS Libraries
+      description: Which CDN-based frameworks or libraries will this design use? (optional)
+      placeholder: e.g. Tailwind CSS, Bootstrap 5, Chart.js, Alpine.js
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References / Inspiration
+      description: Any existing designs, Dribbble shots, or links for reference? (optional)
+      placeholder: Links to similar designs or screenshots for inspiration.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have checked existing designs and open issues for duplicates.
+          required: true
+        - label: This design can be built as a single self-contained HTML file.
+          required: true
+        - label: This design does not require a backend server to function.
+          required: true
