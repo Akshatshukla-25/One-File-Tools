@@ -490,12 +490,14 @@
   // ---------- Theme toggle ----------
   const root = document.documentElement;
   const themeToggle = document.getElementById('theme-toggle');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const stored = localStorage.getItem('portfolio-theme');
+  const prefersDark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
   if(prefersDark){ root.classList.add('dark'); themeToggle.setAttribute('aria-checked','true'); }
 
   themeToggle.addEventListener('click', () => {
     const isDark = root.classList.toggle('dark');
     themeToggle.setAttribute('aria-checked', String(isDark));
+    localStorage.setItem('portfolio-theme', isDark ? 'dark' : 'light');
   });
 
   // ---------- Mobile nav ----------

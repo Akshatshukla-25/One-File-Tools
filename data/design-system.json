@@ -305,8 +305,11 @@
         "ui"
       ],
       "techStack": [
-        "HTML",
-        "JavaScript",
+        "CSS3",
+        "HTML5",
+        "Vanilla JS"
+      ],
+      "frameworks": [
         "Tailwind CSS"
       ],
       "difficulty": "Medium",
@@ -386,8 +389,11 @@
         "typing-effect"
       ],
       "techStack": [
-        "HTML",
-        "JavaScript",
+        "CSS3",
+        "HTML5",
+        "Vanilla JS"
+      ],
+      "frameworks": [
         "Tailwind CSS"
       ],
       "difficulty": "Medium",
@@ -573,8 +579,7 @@
       "techStack": [
         "CSS3",
         "HTML5",
-        "JavaScript",
-        "Tailwind CSS"
+        "Vanilla JS"
       ],
       "frameworks": [
         "Tailwind CSS"
@@ -679,8 +684,11 @@
         "responsive"
       ],
       "techStack": [
-        "HTML",
-        "JavaScript",
+        "CSS3",
+        "HTML5",
+        "Vanilla JS"
+      ],
+      "frameworks": [
         "Tailwind CSS"
       ],
       "difficulty": "Medium",

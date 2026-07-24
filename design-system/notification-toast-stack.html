@@ -360,7 +360,12 @@
   var root = document.documentElement;
   var themeToggle = document.getElementById('themeToggle');
   var themeLabel = document.getElementById('themeLabel');
-  var override = null; // null = follow system, else 'light' | 'dark'
+  var override = localStorage.getItem('toast-stack-theme');
+
+  if (override) {
+    root.setAttribute('data-theme', override);
+    themeLabel.textContent = override === 'light' ? 'Light' : 'Dark';
+  }
 
   themeToggle.addEventListener('click', function(){
     var systemLight = window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -368,6 +373,7 @@
     override = effective === 'light' ? 'dark' : 'light';
     root.setAttribute('data-theme', override);
     themeLabel.textContent = override === 'light' ? 'Light' : 'Dark';
+    localStorage.setItem('toast-stack-theme', override);
   });
 
   // ---------- Toast engine ----------
