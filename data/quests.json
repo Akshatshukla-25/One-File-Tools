@@ -23,6 +23,12 @@
       "name": "JavaScript Fundamentals",
       "icon": "⚙️",
       "description": "Closures, async, and core JS concepts through interactive challenges"
+    },
+    {
+      "id": "react-fundamentals",
+      "name": "React Fundamentals",
+      "icon": "⚛️",
+      "description": "Virtual DOM, reconciliation, hooks, and component state mechanics"
     }
   ],
   "quests": [

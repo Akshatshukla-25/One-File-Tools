@@ -23,6 +23,12 @@
       "name": "JavaScript Fundamentals",
       "icon": "⚙️",
       "description": "Short JS quizzes covering closures, async, and core concepts"
+    },
+    {
+      "id": "react-fundamentals",
+      "name": "React Fundamentals",
+      "icon": "⚛️",
+      "description": "Virtual DOM, reconciliation, hooks, and component state mechanics"
     }
   ],
   "quizzes": [
