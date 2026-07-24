@@ -1979,7 +1979,6 @@
         "Canvas API",
         "CSS3",
         "HTML5",
-        "Tailwind CSS",
         "Vanilla JS"
       ],
       "difficulty": "Hard",
@@ -2919,6 +2918,31 @@
       "techStack": [
         "CSS3",
         "HTML5",
+        "Vanilla JS"
+      ],
+      "difficulty": "Medium",
+      "status": "live"
+    },
+    {
+      "id": "regex-railroad-diagram",
+      "name": "RegEx Railroad Diagram & Explainer",
+      "shortDescription": "Visual syntax flowchart generator and plain-English explainer for Regular Expressions.",
+      "longDescription": "## RegEx Railroad Diagram & Explainer\n\nA privacy-first client-side developer utility for parsing Regular Expressions, generating interactive syntax railroad diagrams, and providing plain-English breakdowns.\n\n### Features\n\n- Visual Railroad Flowchart: Renders syntax diagrams showing matching tracks, groups, character classes, and quantifiers\n- Plain-English Breakdown: Explains regex tokens step-by-step in human-readable terms\n- Live Match Inspector: Tests sample strings against pattern with group capture analysis\n- Preset Library: Quick-load patterns for email, URL, IPv4, phone numbers, dates, and hex colors\n- One-click SVG Export and JavaScript Code snippet generator\n- Dark and light theme modes with localStorage persistence\n- Works 100% offline with zero dependencies",
+      "category": "utilities",
+      "tags": [
+        "developer-tools",
+        "diagram",
+        "flowchart",
+        "parser",
+        "regex",
+        "regexp",
+        "utility",
+        "visualizer"
+      ],
+      "techStack": [
+        "CSS3",
+        "HTML5",
+        "SVG",
         "Vanilla JS"
       ],
       "difficulty": "Medium",

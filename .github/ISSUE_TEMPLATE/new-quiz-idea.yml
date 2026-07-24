@@ -1,20 +1,20 @@
-name: New Quest Idea
-description: Propose a new interactive learning quest.
+name: New Quiz Idea
+description: Propose a new multiple-choice quiz.
 title: "Idea: "
-labels: ["idea"]
+labels: ["idea", "quizzes"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for proposing a new quest! Please fill in the details below.
-        Quests are interactive, gamified lessons — think Flexbox Froggy, but for any dev concept. Make sure your idea isn't already an existing quest or open issue.
+        Thanks for proposing a new quiz! Please fill in the details below.
+        Quizzes are quick multiple-choice challenges to test developer knowledge. Make sure your idea isn't already an existing quiz or open issue.
 
   - type: input
-    id: quest-name
+    id: quiz-name
     attributes:
-      label: Quest Name
-      description: A short, descriptive name for the quest.
-      placeholder: e.g. Git Bisect Detective, Flexbox Froggy
+      label: Quiz Name
+      description: A short, descriptive name for the quiz.
+      placeholder: e.g. CSS Selectors Challenge, Git Branching Quiz
     validations:
       required: true
 
@@ -23,7 +23,7 @@ body:
     attributes:
       label: Proposed Filename
       description: Kebab-case .html filename.
-      placeholder: e.g. git-bisect-detective.html
+      placeholder: e.g. css-selectors-challenge.html
     validations:
       required: true
 
@@ -31,12 +31,13 @@ body:
     id: category
     attributes:
       label: Category
-      description: Which category does this quest belong to?
+      description: Which category does this quiz belong to?
       options:
         - Git & Version Control
         - CSS Fundamentals
         - JavaScript Fundamentals
         - React Fundamentals
+        - General Dev Quests
         - Other (propose a new category in the description)
     validations:
       required: true
@@ -45,8 +46,8 @@ body:
     id: description
     attributes:
       label: Description
-      description: What concept does this quest teach? What's the gameplay hook?
-      placeholder: Describe the quest's learning goal and how the interactive gameplay teaches it.
+      description: What topic does this quiz cover? What's the learning goal?
+      placeholder: Describe the quiz's topic and what knowledge it tests.
     validations:
       required: true
 
@@ -66,7 +67,7 @@ body:
     id: difficulty
     attributes:
       label: Suggested Difficulty
-      description: How complex do you think this quest is? (Final label assigned by maintainer, slightly negotiable.)
+      description: How complex do you think this quiz is? (Final label assigned by maintainer, slightly negotiable.)
       options:
         - Easy
         - Medium
@@ -78,23 +79,23 @@ body:
     attributes:
       label: Tags
       description: Comma-separated tags for filtering on the landing page.
-      placeholder: e.g. git, bisect, interactive, binary-search
+      placeholder: e.g. css, selectors, specificity, quiz
 
   - type: textarea
     id: references
     attributes:
       label: References / Inspiration
-      description: Any existing games, tools, or links for reference? (optional)
-      placeholder: Links to similar interactive lessons or screenshots for inspiration.
+      description: Any existing quizzes, tools, or links for reference? (optional)
+      placeholder: Links to similar quizzes or screenshots for inspiration.
 
   - type: checkboxes
     id: checklist
     attributes:
       label: Pre-submission Checklist
       options:
-        - label: I have checked existing quests and open issues for duplicates.
+        - label: I have checked existing quizzes and open issues for duplicates.
           required: true
-        - label: This quest can be built as a single self-contained HTML file.
+        - label: This quiz can be built as a single self-contained HTML file.
           required: true
-        - label: This quest does not require a backend server to function.
+        - label: This quiz does not require a backend server to function.
           required: true

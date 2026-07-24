@@ -463,11 +463,17 @@ window.addEventListener('resize', applyMobileView);
 const themeToggle = document.getElementById('themeToggle');
 const sunIcon = document.getElementById('sunIcon');
 const moonIcon = document.getElementById('moonIcon');
+(function(){
+  const saved = localStorage.getItem('folio-mail-theme');
+  if (saved === 'dark') { document.documentElement.classList.add('dark'); sunIcon.classList.remove('hidden'); moonIcon.classList.add('hidden'); }
+  else if (saved === 'light') { document.documentElement.classList.remove('dark'); sunIcon.classList.add('hidden'); moonIcon.classList.remove('hidden'); }
+})();
 themeToggle.addEventListener('click', () => {
   document.documentElement.classList.toggle('dark');
   const isDark = document.documentElement.classList.contains('dark');
   sunIcon.classList.toggle('hidden', !isDark);
   moonIcon.classList.toggle('hidden', isDark);
+  localStorage.setItem('folio-mail-theme', isDark ? 'dark' : 'light');
 });
 
 // Compose modal
